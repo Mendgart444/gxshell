@@ -1,3 +1,5 @@
+mod gxinstaller;
+mod env_var;
 use std::io::{self, Write};
 use std::process::{Command, Stdio};
 use std::env;
@@ -29,6 +31,7 @@ fn main() {
 
 fn execute_command(command:&str) {
     let parts:Vec<&str> = command.split_whitespace().collect();
+
     if parts.is_empty() {
         return;
     }
@@ -38,6 +41,7 @@ fn execute_command(command:&str) {
         "dir" => list_directory(),
         "cls" => clear_screen(),
         "version" => println!("version 0.1.0"),
+        "gxinstaller" => run_gxinstaller(parts),
         _ => run_external_command(parts),
     }
 
@@ -67,6 +71,41 @@ fn list_directory() {
 
 fn clear_screen() {
     print!("\x1B[2J\x1B[1;1H");
+}
+
+fn run_gxinstaller(args: Vec<&str>) {
+    if args.len() < 2 {
+        println!("option not found. If you need help run: gxinstaller --help");
+        return;
+    } else if args.contains(&"--help")  {
+        println!("Options:");
+        println!("  --help              shows this message.");
+        println!("  --version           shows the version of gxinstaller.");
+        println!("  --install (option)  install the application or tool.");
+        println!("  --list              shows a list of the applications or tools you can install.");
+        println!("  --update            updates all tools and software.");
+
+    } else if args.contains(&"--version")  {
+        println!("gxinstaller version: {}", env_var::GXINSTALLER_VERSION);
+    } else if args.contains(&"--list")  {
+        println!("CyberGX");
+        println!("C/C++");
+        println!("Python");
+        println!("GXManager");
+        println!("GXGui designer");
+        println!("GX IDE (is not only for CyberGX");
+        println!("git");
+    } else if args.contains(&"--install")  {
+        if args.contains(&"CyberGX") {
+            gxinstaller::install_cybergx_default()
+        } else {
+            println!("Package not found. to show avaiable packages: gxinstaller --list");
+        }
+    } else if args.contains(&"--update") {
+        gxinstaller::update_all()
+    }
+
+
 }
 
 fn run_external_command(args: Vec<&str>) {
