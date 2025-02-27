@@ -5,7 +5,6 @@ use windows::Win32::System::Firmware::GetFirmwareEnvironmentVariableA;
 use std::path::PathBuf;
 
 pub fn start() {
-    let mut is_safemode:bool = true;
     let mut input:String = String::new();
     
     
@@ -38,7 +37,6 @@ fn execute_command(command:&str){
 
     match parts[0] {
         "stepin" => run_stepin(parts),
-        "exit_save_mode" => is_safemode = false,
         "cd" => change_directory(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),
@@ -75,26 +73,23 @@ fn clear_screen() {
 
 fn run_stepin(args: Vec<&str>) {
     let mut in_bios:bool = false;
-    if is_safemode {
-        println!("you are in safe mode you have no acces. to exit run \"exit_safe_mode\"");
-    } else {
-        if args.contains(&"--bios") {
-            println!("gxcore entert bios.");
-            println!("to show options type help --bios");
+    if args.contains(&"--bios") {
+        println!("gxcore entert bios.");
+        println!("to show options type help --bios");
             in_bios = true;
-        } else if in_bios && args.contains(&"UEFI_var") {
-            let mut buffer = [0u8; 256];
-            let result = unsafe {
-                GetFirmwareEnvironmentVariableA("BootOrder\0", "{8BE4DF61-93CA-11D2-AA0D-00E098032B8C}\0", buffer.as_mut_ptr() as *mut _, buffer.len() as u32)
-            };
+    } else if in_bios && args.contains(&"UEFI_var") {
+        let mut buffer = [0u8; 256];
+        let result = unsafe {
+            GetFirmwareEnvironmentVariableA("BootOrder\0", "{8BE4DF61-93CA-11D2-AA0D-00E098032B8C}\0", buffer.as_mut_ptr() as *mut _, buffer.len() as u32)
+        };
         
-            if result == 0 {
-                println!("Error Faild to read UEFI-Variable!");
-            } else {
-                println!("BootOrder: {:?}", &buffer[..result as usize]);
-            }
-        } 
-    }
+        if result == 0 {
+            println!("Error Faild to read UEFI-Variable!");
+        } else {
+            println!("BootOrder: {:?}", &buffer[..result as usize]);
+        }
+    } 
+    
 }
 
 fn run_stepout(args: Vec<&str>) {
