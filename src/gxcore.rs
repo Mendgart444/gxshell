@@ -5,8 +5,9 @@ use windows::Win32::System::Firmware::GetFirmwareEnvironmentVariableA;
 use std::path::PathBuf;
 
 pub fn start() {
-    let mut input:String = String::new();
     let mut is_safemode:bool = true;
+    let mut input:String = String::new();
+    
     
     println!("GXCORE All rigths served");
     loop {
