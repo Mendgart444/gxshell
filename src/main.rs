@@ -113,7 +113,7 @@ fn run_gxinstaller(args: Vec<&str>) {
 fn run_gxcore(args: Vec<&str>) {
     if args.len() < 2 {
         println!("Error Option not found");
-    } else if args.contains("--start") {
+    } else if args.contains(&"--start") {
         println!("WARNING: IF YOU MAKE AN MISTAKE IN GXCORE THAN YOUR COMPUTER IS MAYBE UNUSEABLE!!!");
         gxcore::start();
     }
