@@ -40,7 +40,6 @@ fn execute_command(command:&str){
         "cd" => change_directory(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),
-        "stepout" => run_stepout(parts),
          _ => run_external_command(parts),
     }
 }
@@ -90,14 +89,6 @@ fn run_stepin(args: Vec<&str>) {
         }
     } 
     
-}
-
-fn run_stepout(args: Vec<&str>) {
-    if args.len() < 2 {
-        println!("Error: Unknown command!");
-    } else if args.contains(&"--safe"){
-        is_safemode = true;
-    }
 }
 
 fn run_external_command(args: Vec<&str>) {
