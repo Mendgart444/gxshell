@@ -42,6 +42,7 @@ fn execute_command(command:&str) {
         "cls" => clear_screen(),
         "version" => println!("version 0.1.0"),
         "gxinstaller" => run_gxinstaller(parts),
+        "gxcore" => run_gxcore(parts),
         _ => run_external_command(parts),
     }
 
@@ -106,6 +107,15 @@ fn run_gxinstaller(args: Vec<&str>) {
     }
 
 
+}
+
+fn run_gxcore(args: Vec<&str>) {
+    if args.len() < 2 {
+        println!("Error Option not found");
+    } else if args.contain("--start") {
+        println!("WARNING: IF YOU MAKE AN MISTAKE IN GXCORE THAN YOUR COMPUTER IS MAYBE UNUSEABLE!!!");
+        gxcore::start();
+    }
 }
 
 fn run_external_command(args: Vec<&str>) {
