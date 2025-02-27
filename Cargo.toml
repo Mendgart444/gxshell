@@ -9,4 +9,8 @@ dirs = "5.0"
 walkdir = "2.5"
 which = "4.4"
 subprocess = "0.2"
-windows = "0.60.0"
+windows = { version = "0.52", features = [
+    "Win32_System_Firmware",
+    "Win32_Foundation",
+    "Win32_System_SystemInformation"
+]}
