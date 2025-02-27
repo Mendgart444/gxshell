@@ -25,7 +25,7 @@ pub fn start() {
   }
 }
 
-fn execute_command(command){
+fn execute_command(command:&str){
     let parts:Vec<&str> = command.split_whitespace().collect();
 
       if parts.is_empty() {
@@ -33,7 +33,7 @@ fn execute_command(command){
       }
 
     match parts[0] {
-        "stepin" => run_stepin(),
+        "stepin" => run_stepin(parts),
         "cd" => change_directory(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),
