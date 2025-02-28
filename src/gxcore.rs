@@ -1,31 +1,37 @@
-use std::io::{self, Write};
 use std::process::{Command, Stdio};
 use std::env;
 use std::fs;
 use std::path::PathBuf;
+use sysinfo::System;
+use rustyline::Editor;
 
 pub fn start() {
-    let mut input:String = String::new();
+    let mut rl = Editor::<(), _>::new().expect("Faild to launch editor.");
+    let _ = rl.load_history(".hystory");
     
     
     println!("GXCORE All rigths served");
     loop {
         let current_dir:PathBuf = env::current_dir().unwrap_or(PathBuf::from("C:\\"));
-        print!("{}>", current_dir.display());
-        io::stdout().flush().unwrap();
+        let prompt = format!("{}> ", current_dir.display());
+        
+        match rl.readline(&prompt) {
+            Ok(line) => {
+                let command = line.trim();
+                if command == "exit" {
+                    break;
+                }
+                rl.add_history_entry(command);
+                execute_command(command);
+            }
 
-        input.clear();
-        io::stdin().read_line(&mut input).unwrap();
-        let command:&str = input.trim();
-
-        if command == "exit" {
-            break;
+            Err(_) => break,
         }
+    }
+  
+    let _ = rl.save_history(".hystory");
 
-        execute_command(command);
 
-    
-  }
 }
 
 fn execute_command(command:&str){
@@ -36,11 +42,31 @@ fn execute_command(command:&str){
       }
 
     match parts[0] {
-        "bios" => bios(parts),
+        "bios" => {
+            if is_admin() {
+                bios(parts);
+            } else {
+                println!("Error, you need admin rights for this");
+            }
+        },
+        "sysinfo" => system_info(),
         "cd" => change_directory(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),
          _ => run_external_command(parts),
+    }
+}
+
+fn is_admin() -> bool {
+    
+    #[cfg(target_os = "windows")]
+    {
+    use winapi::um::shellapi::IsUserAnAdmin;
+    unsafe { IsUserAnAdmin() != 0 }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+    std::env::var("USER").unwrap_or_default() == "root"
     }
 }
 
@@ -50,8 +76,10 @@ fn change_directory(args: Vec<&str>) {
         return;
     }
     let new_path = PathBuf::from(args[1]);
-    if env::set_current_dir(&new_path).is_ok() {
-        println!("Changed directory to {}", new_path.display());
+    if new_path.exists() && new_path.is_dir() {
+        if let Err(e) = env::set_current_dir(&new_path) {
+            println!("Faild to change dir {}", e);
+        }
     } else {
         println!("Directory not found: {}", new_path.display());
     }
@@ -71,27 +99,49 @@ fn clear_screen() {
 }
 
 fn bios(args: Vec<&str>) {
-    let path = "/sys/firmware/efi/efivars/BootOrder-8be4df61-93ca-11d2-aa0d-00e098032b8c";
+    if args.len() < 2 {
+        println!("Error that command is not found in the bios syntax.");
+        return;
+    } else if args[1] == "--read_var"{
+        let path = "/sys/firmware/efefivars/BootOrder-8be4df61-93ca-11d2-aa0d-00e098032b8c";
 
-    match fs::read(path) {
-        Ok(data) => {
-            println!("BootOrder (raw): {:?}", &data);
-        }
-        Err(e) => {
-            eprintln!("Fehler beim Lesen der UEFI-Variable: {}", e);
+        match fs::read(path) {
+            Ok(data) => {
+                println!("BootOrder (raw): {:?}", &data);
+            }
+            Err(e) => {
+                eprintln!("Error: could not read UEFI-Variable: {}", e);
+            }
+        
         }
     }
 }
 
+fn system_info() {
+    let mut sys = System::new();
+    sys.refresh_all();
+
+    println!("CPU usage: {:.2}%", sys.global_cpu_info().cpu_usage());
+    println!("RAM {}/{} MB", sys.used_memory() / 1024, sys.total_memory() / 1024);
+}
+
 fn run_external_command(args: Vec<&str>) {
-    if let Ok(mut child) = Command::new(args[0])
+    if args.is_empty() {
+        return;
+    }
+
+    match Command::new(args[0])
         .args(&args[1..])
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .spawn()
     {
-        let _ = child.wait();
-    } else {
-        println!("Unknown command: {}", args[0]);
+        Ok(mut child) => {
+            let _ = child.wait();
+        }
+
+        Err(e) => {
+            println!("Error command {} is not found as internal or external command: {}", args[0], e);
+        }
     }
 }

@@ -5,29 +5,36 @@ use std::io::{self, Write};
 use std::process::{Command, Stdio};
 use std::env;
 use std::path::PathBuf;
+use rustyline::Editor;
 //use crossterm::execute;
 
 fn main() {
-    let mut input:String = String::new();
-
-    println!("GxShell v0.1.0, all rights served.");
-
+    let mut rl = Editor::<(), _>::new().expect("Faild to launch editor.");
+    let _ = rl.load_history(".hystory");
+    
+    
+    println!("GXShell All rigths served");
     loop {
         let current_dir:PathBuf = env::current_dir().unwrap_or(PathBuf::from("C:\\"));
-        print!("{}>", current_dir.display());
-        io::stdout().flush().unwrap();
+        let prompt = format!("{}> ", current_dir.display());
+        
+        match rl.readline(&prompt) {
+            Ok(line) => {
+                let command = line.trim();
+                if command == "exit" {
+                    break;
+                }
+                rl.add_history_entry(command);
+                execute_command(command);
+            }
 
-        input.clear();
-        io::stdin().read_line(&mut input).unwrap();
-        let command:&str = input.trim();
-
-        if command == "exit" {
-            break;
+            Err(_) => break,
         }
-
-        execute_command(command);
-
     }
+  
+    let _ = rl.save_history(".hystory");
+
+
 }
 
 fn execute_command(command:&str) {
@@ -55,8 +62,10 @@ fn change_directory(args: Vec<&str>) {
         return;
     }
     let new_path = PathBuf::from(args[1]);
-    if env::set_current_dir(&new_path).is_ok() {
-        println!("Changed directory to {}", new_path.display());
+    if new_path.exists() && new_path.is_dir() {
+        if let Err(e) = env::set_current_dir(&new_path) {
+            println!("Faild to change dir {}", e);
+        }
     } else {
         println!("Directory not found: {}", new_path.display());
     }
@@ -112,7 +121,7 @@ fn run_gxinstaller(args: Vec<&str>) {
 
 fn run_gxcore(args: Vec<&str>) {
     if args.len() < 2 {
-        println!("Error Option not found");
+        println!("Error: This is not an available option in gxcore.");
     } else if args.contains(&"--start") {
         println!("WARNING: IF YOU MAKE AN MISTAKE IN GXCORE THAN YOUR COMPUTER IS MAYBE UNUSEABLE!!!");
         gxcore::start();
@@ -120,14 +129,22 @@ fn run_gxcore(args: Vec<&str>) {
 }
 
 fn run_external_command(args: Vec<&str>) {
-    if let Ok(mut child) = Command::new(args[0])
+    if args.is_empty() {
+        return;
+    }
+
+    match Command::new(args[0])
         .args(&args[1..])
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .spawn()
     {
-        let _ = child.wait();
-    } else {
-        println!("Unknown command: {}", args[0]);
+        Ok(mut child) => {
+            let _ = child.wait();
+        }
+
+        Err(e) => {
+            println!("Error command {} is not found as internal or external command: {}", args[0], e);
+        }
     }
 }
