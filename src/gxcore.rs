@@ -1,7 +1,7 @@
 use std::io::{self, Write};
 use std::process::{Command, Stdio};
 use std::env;
-use windows::Win32::System::Firmware::GetFirmwareEnvironmentVariableA;
+use std::fs;
 use std::path::PathBuf;
 
 pub fn start() {
@@ -36,7 +36,7 @@ fn execute_command(command:&str){
       }
 
     match parts[0] {
-        "stepin" => run_stepin(parts),
+        "bios" => bios(parts),
         "cd" => change_directory(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),
@@ -70,25 +70,17 @@ fn clear_screen() {
     print!("\x1B[2J\x1B[1;1H");
 }
 
-fn run_stepin(args: Vec<&str>) {
-    let mut in_bios:bool = false;
-    if args.contains(&"--bios") {
-        println!("gxcore entert bios.");
-        println!("to show options type help --bios");
-            in_bios = true;
-    } else if in_bios && args.contains(&"UEFI_var") {
-        let mut buffer = [0u8; 256];
-        let result = unsafe {
-            GetFirmwareEnvironmentVariableA("BootOrder\0", "{8BE4DF61-93CA-11D2-AA0D-00E098032B8C}\0", buffer.as_mut_ptr() as *mut _, buffer.len() as u32)
-        };
-        
-        if result == 0 {
-            println!("Error Faild to read UEFI-Variable!");
-        } else {
-            println!("BootOrder: {:?}", &buffer[..result as usize]);
+fn bios(args: Vec<&str>) {
+    let path = "/sys/firmware/efi/efivars/BootOrder-8be4df61-93ca-11d2-aa0d-00e098032b8c";
+
+    match fs::read(path) {
+        Ok(data) => {
+            println!("BootOrder (raw): {:?}", &data);
         }
-    } 
-    
+        Err(e) => {
+            eprintln!("Fehler beim Lesen der UEFI-Variable: {}", e);
+        }
+    }
 }
 
 fn run_external_command(args: Vec<&str>) {
