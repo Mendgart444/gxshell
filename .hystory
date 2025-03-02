@@ -7,3 +7,12 @@ cls
 s
 cls
 c
+clear
+cls
+clear
+bash
+clear
+gxinstaller --install CyberGX
+h
+gxinstaller --list
+clear
