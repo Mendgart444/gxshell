@@ -1,7 +1,6 @@
 mod gxinstaller;
 mod gxcore;
 mod env_var;
-use std::io::{self, Write};
 use std::process::{Command, Stdio};
 use std::env;
 use std::path::PathBuf;
