@@ -56,18 +56,15 @@ fn execute_command(command:&str){
          _ => run_external_command(parts),
     }
 }
-
+#[cfg(target_os = "windows")]
 fn is_admin() -> bool {
-    
-    #[cfg(target_os = "windows")]
-    {
-    use winapi::um::shellapi::IsUserAnAdmin;
+    use windows::Win32::Security::Authorization::IsUserAnAdmin;
     unsafe { IsUserAnAdmin() != 0 }
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
+}
+
+#[cfg(not(target_os = "windows"))]
+fn is_admin() -> bool {
     std::env::var("USER").unwrap_or_default() == "root"
-    }
 }
 
 fn change_directory(args: Vec<&str>) {
