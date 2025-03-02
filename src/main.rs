@@ -13,7 +13,7 @@ fn main() {
     let _ = rl.load_history(".hystory");
     
     
-    println!("GXShell All rigths served");
+    println!("GXShell version 0.1.0 All rigths served");
     loop {
         let current_dir:PathBuf = env::current_dir().unwrap_or(PathBuf::from("C:\\"));
         let prompt = format!("{}> ", current_dir.display());
@@ -24,7 +24,7 @@ fn main() {
                 if command == "exit" {
                     break;
                 }
-                rl.add_history_entry(command);
+                let _ = rl.add_history_entry(command);
                 execute_command(command);
             }
 
@@ -88,7 +88,7 @@ fn run_gxinstaller(args: Vec<&str>) {
     if args.len() < 2 {
         println!("option not found. If you need help run: gxinstaller --help");
         return;
-    } else if args.contains(&"--help")  {
+    } else if args[1] == "--help"  {
         println!("Options:");
         println!("  --help              shows this message.");
         println!("  --version           shows the version of gxinstaller.");
@@ -96,9 +96,9 @@ fn run_gxinstaller(args: Vec<&str>) {
         println!("  --list              shows a list of the applications or tools you can install.");
         println!("  --update            updates all tools and software.");
 
-    } else if args.contains(&"--version")  {
+    } else if args[1] == "--version"  {
         println!("gxinstaller version: {}", env_var::GXINSTALLER_VERSION);
-    } else if args.contains(&"--list")  {
+    } else if args[1] == "--list"  {
         println!("CyberGX");
         println!("C/C++");
         println!("Python");
@@ -106,13 +106,13 @@ fn run_gxinstaller(args: Vec<&str>) {
         println!("GXGui designer");
         println!("GX IDE (is not only for CyberGX");
         println!("git");
-    } else if args.contains(&"--install")  {
-        if args.contains(&"CyberGX") {
+    } else if args[1] == "--install"  {
+        if args[2] == "CyberGX" {
             gxinstaller::install_cybergx_default()
         } else {
             println!("Package not found. to show avaiable packages: gxinstaller --list");
         }
-    } else if args.contains(&"--update") {
+    } else if args[1] == "--update" {
         gxinstaller::update_all()
     }
 
@@ -122,7 +122,7 @@ fn run_gxinstaller(args: Vec<&str>) {
 fn run_gxcore(args: Vec<&str>) {
     if args.len() < 2 {
         println!("Error: This is not an available option in gxcore.");
-    } else if args.contains(&"--start") {
+    } else if args[1] == "--start" {
         println!("WARNING: IF YOU MAKE AN MISTAKE IN GXCORE THAN YOUR COMPUTER IS MAYBE UNUSEABLE!!!");
         gxcore::start();
     }

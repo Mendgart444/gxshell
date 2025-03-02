@@ -21,7 +21,7 @@ pub fn start() {
                 if command == "exit" {
                     break;
                 }
-                rl.add_history_entry(command);
+                let _ = rl.add_history_entry(command);
                 execute_command(command);
             }
 

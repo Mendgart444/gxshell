@@ -1,7 +1,14 @@
 [package]
 name = "gxcmd"
+authors = ["Raffael <Mendgart444>"]
+description = "A shell for Devs. inspired by the windows cmd, msys and git bash"
 version = "0.1.0"
+repository = "https://github.com/Mendgart444/gxshell"
+documentation = "https://github.com/Mendgart444/gxshell/blob/main/README.md"
 edition = "2021"
+keywords = ["shell", "based-on-cmd", "dev-tools", "tools"]
+categories = ["command-line-utilities"]
+license = "MIT"
 
 [dependencies]
 crossterm = "0.27"
