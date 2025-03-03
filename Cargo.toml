@@ -21,3 +21,4 @@ rustyline = "12.0.0"
 #windows = { version = "0.52", features = ["Win32_Security_Authorization"] }
 winapi = { version = "0.3", features = ["securitybaseapi", "processthreadsapi", "winnt", "handleapi"] }
 nu-ansi-term = "0.49"
+reedline = "0.26"

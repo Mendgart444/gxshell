@@ -4,36 +4,57 @@ mod env_var;
 use std::process::{Command, Stdio};
 use std::env;
 use std::path::PathBuf;
-use rustyline::Editor;
 use nu_ansi_term::Color::{Blue, Green, Yellow, Red};
+use reedline::{Reedline, Signal, DefaultPrompt, DefaultPromptSegment};
 //use crossterm::execute;
 
 fn main() {
-    let mut rl = Editor::<(), _>::new().expect("Faild to launch editor.");
-    let _ = rl.load_history(".hystory");
-    
-    
-    println!("{}", Red.bold().paint("GXShell version 0.1.0 All rigths served"));
+    let mut line_editor:Reedline = Reedline::create();
+
+
+    println!("{}", Blue.bold().paint("GXShell version 0.1.0 All rigths reserved"));
+
+
     loop {
         let current_dir:PathBuf = env::current_dir().unwrap_or(PathBuf::from("C:\\"));
-        let prompt = format!("{}> ", Green.paint(current_dir.display().to_string()));
-        
-        match rl.readline(&prompt) {
-            Ok(line) => {
+        let prompt:DefaultPrompt = DefaultPrompt::new(
+            DefaultPromptSegment::Basic(current_dir.display().to_string()),
+            DefaultPromptSegment::Empty,
+        );
+
+        match line_editor.read_line(&prompt) {
+            Ok(Signal::Success(line)) => {
                 let command = line.trim();
                 if command == "exit" {
                     break;
                 }
-                let _ = rl.add_history_entry(command);
+                
+                if command.starts_with("cd") {
+                    println!("{}", Yellow.paint(command));
+                } else if command.starts_with("cls") {
+                    println!("{}", Red.paint(command));
+                } else if command.starts_with("exit") {
+                    println!("{}", Red.paint(command));
+                } else if command.starts_with("dir") {
+                    println!("{}", Red.paint(command));
+                } else if command.starts_with("gxcore") {
+                    println!("{}", Red.paint(command));
+                } else {
+                    println!("{}", Blue.paint(command));
+                }
+
                 execute_command(command);
+            
             }
-
-            Err(_) => break,
+            _ => break,
+            
+            
+            
         }
-    }
-  
-    let _ = rl.save_history(".hystory");
 
+    }    
+    
+        
 
 }
 
@@ -48,7 +69,7 @@ fn execute_command(command:&str) {
         "cd" => change_directory(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),
-        "version" => println!("version 0.1.0"),
+        "version" => println!("{}", env_var::GXSHELL_VERSION),
         "gxinstaller" => run_gxinstaller(parts),
         "gxcore" => run_gxcore(parts),
         _ => run_external_command(parts),
@@ -82,6 +103,7 @@ fn list_directory() {
 
 fn clear_screen() {
     print!("\x1B[2J\x1B[1;1H");
+    println!("");
 }
 
 fn run_gxinstaller(args: Vec<&str>) {
@@ -144,7 +166,7 @@ fn run_external_command(args: Vec<&str>) {
         }
 
         Err(e) => {
-            println!("Error command {} is not found as internal or external command: {}", args[0], e);
+            println!("{}", Red.paint(format!("Error command {} is not found as internal or external command: {}", args[0], e)));
         }
     }
 }
