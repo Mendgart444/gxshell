@@ -5,7 +5,10 @@ use std::path::PathBuf;
 use sysinfo::System;
 use rustyline::Editor;
 
+
 pub fn start() {
+
+
     let mut rl = Editor::<(), _>::new().expect("Faild to launch editor.");
     let _ = rl.load_history(".hystory");
     
@@ -58,8 +61,40 @@ fn execute_command(command:&str){
 }
 #[cfg(target_os = "windows")]
 fn is_admin() -> bool {
-    use windows::Win32::Security::Authorization::IsUserAnAdmin;
-    unsafe { IsUserAnAdmin() != 0 }
+    use winapi::um::processthreadsapi::OpenProcessToken;
+    use winapi::um::securitybaseapi::GetTokenInformation;
+    use winapi::um::winnt::{TokenElevation, HANDLE, TOKEN_ELEVATION, TOKEN_QUERY};
+    use winapi::um::handleapi::CloseHandle;
+    use winapi::um::processthreadsapi::GetCurrentProcess;
+    use std::ptr;
+    use std::mem;
+
+
+
+
+    unsafe {
+        let process = GetCurrentProcess();
+        let mut token: HANDLE = ptr::null_mut();
+
+        if OpenProcessToken(process, TOKEN_QUERY, &mut token) == 0 {
+            return false;
+        }
+
+        let mut elevation = TOKEN_ELEVATION { TokenIsElevated: 0 };
+        let mut size = mem::size_of::<TOKEN_ELEVATION>() as u32;
+
+        let success = GetTokenInformation(
+            token,
+            TokenElevation,
+            &mut elevation as *mut _ as *mut _,
+            size,
+            &mut size,
+        );
+
+        CloseHandle(token); // WICHTIG: Handle schließen, um Memory-Leaks zu vermeiden
+
+        success != 0 && elevation.TokenIsElevated != 0
+    }
 }
 
 #[cfg(not(target_os = "windows"))]

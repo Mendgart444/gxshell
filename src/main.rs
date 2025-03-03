@@ -5,6 +5,7 @@ use std::process::{Command, Stdio};
 use std::env;
 use std::path::PathBuf;
 use rustyline::Editor;
+use nu_ansi_term::Color::{Blue, Green, Yellow, Red};
 //use crossterm::execute;
 
 fn main() {
@@ -12,10 +13,10 @@ fn main() {
     let _ = rl.load_history(".hystory");
     
     
-    println!("GXShell version 0.1.0 All rigths served");
+    println!("{}", Red.bold().paint("GXShell version 0.1.0 All rigths served"));
     loop {
         let current_dir:PathBuf = env::current_dir().unwrap_or(PathBuf::from("C:\\"));
-        let prompt = format!("{}> ", current_dir.display());
+        let prompt = format!("{}> ", Green.paint(current_dir.display().to_string()));
         
         match rl.readline(&prompt) {
             Ok(line) => {
