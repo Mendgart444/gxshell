@@ -151,6 +151,8 @@ fn bios(args: Vec<&str>) {
     }
 }
 
+
+
 fn system_info() {
     let mut sys = System::new();
     sys.refresh_all();

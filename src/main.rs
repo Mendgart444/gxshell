@@ -5,7 +5,7 @@ mod env_var;
 use std::process::{Command, Stdio};
 use std::env;
 use std::path::PathBuf;
-use nu_ansi_term::Color::{Green, Red};
+use nu_ansi_term::Color::{Green, Red, Blue};
 use rustyline::Editor;
 
 
@@ -89,7 +89,7 @@ fn clear_screen() {
 
 fn run_gxinstaller(args: Vec<&str>) {
     if args.len() < 2 {
-        println!("option not found. If you need help run: gxinstaller --help");
+        println!("{}", Red.paint("option not found. If you need help run: gxinstaller --help"));
         return;
     } else if args[1] == "--help"  {
         println!("Options:");
@@ -102,18 +102,17 @@ fn run_gxinstaller(args: Vec<&str>) {
     } else if args[1] == "--version"  {
         println!("gxinstaller version: {}", env_var::GXINSTALLER_VERSION);
     } else if args[1] == "--list"  {
-        println!("CyberGX");
         println!("C/C++");
         println!("Python");
-        println!("GXManager");
-        println!("GXGui designer");
-        println!("GX IDE (is not only for CyberGX");
+        println!("*GXManager");
+        println!("*GX IDE (like vscode but modern)");
         println!("git");
+        println!("{}", Blue.paint("\n* means that it is not released yet"));
     } else if args[1] == "--install"  {
         if args[2] == "CyberGX" {
             gxinstaller::install_cybergx_default()
         } else {
-            println!("Package not found. to show avaiable packages: gxinstaller --list");
+            println!("{}", Red.paint("Package not found. to show avaiable packages: gxinstaller --list"));
         }
     } else if args[1] == "--update" {
         gxinstaller::update_all()
