@@ -1,60 +1,41 @@
+
 mod gxinstaller;
 mod gxcore;
 mod env_var;
 use std::process::{Command, Stdio};
 use std::env;
 use std::path::PathBuf;
-use nu_ansi_term::Color::{Blue, Green, Yellow, Red};
-use reedline::{Reedline, Signal, DefaultPrompt, DefaultPromptSegment};
-//use crossterm::execute;
-
-fn main() {
-    let mut line_editor:Reedline = Reedline::create();
+use nu_ansi_term::Color::{Green, Red};
+use rustyline::Editor;
 
 
-    println!("{}", Blue.bold().paint("GXShell version 0.1.0 All rigths reserved"));
-
-
+fn main()  {
+    let mut rl = Editor::<(), _>::new().expect("Faild to launch editor.");
+    let _ = rl.load_history(".hystory");
+    
+    
+    println!("{}", Red.paint(format!("GXShell version {}", env_var::GXSHELL_VERSION)));
     loop {
         let current_dir:PathBuf = env::current_dir().unwrap_or(PathBuf::from("C:\\"));
-        let prompt:DefaultPrompt = DefaultPrompt::new(
-            DefaultPromptSegment::Basic(current_dir.display().to_string()),
-            DefaultPromptSegment::Empty,
-        );
-
-        match line_editor.read_line(&prompt) {
-            Ok(Signal::Success(line)) => {
+        let prompt = format!("{}> ", Green.paint(current_dir.display().to_string()));
+        
+        match rl.readline(&prompt) {
+            Ok(line) => {
                 let command = line.trim();
                 if command == "exit" {
                     break;
                 }
-                
-                if command.starts_with("cd") {
-                    println!("{}", Yellow.paint(command));
-                } else if command.starts_with("cls") {
-                    println!("{}", Red.paint(command));
-                } else if command.starts_with("exit") {
-                    println!("{}", Red.paint(command));
-                } else if command.starts_with("dir") {
-                    println!("{}", Red.paint(command));
-                } else if command.starts_with("gxcore") {
-                    println!("{}", Red.paint(command));
-                } else {
-                    println!("{}", Blue.paint(command));
-                }
-
+                let _ = rl.add_history_entry(command);
                 execute_command(command);
-            
             }
-            _ => break,
-            
-            
-            
-        }
 
-    }    
-    
-        
+            Err(_) => break,
+        }
+    }
+  
+    let _ = rl.save_history(".hystory");
+
+
 
 }
 
@@ -69,7 +50,7 @@ fn execute_command(command:&str) {
         "cd" => change_directory(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),
-        "version" => println!("{}", env_var::GXSHELL_VERSION),
+        "version" => println!("{}", Green.paint(env_var::GXSHELL_VERSION)),
         "gxinstaller" => run_gxinstaller(parts),
         "gxcore" => run_gxcore(parts),
         _ => run_external_command(parts),
@@ -79,16 +60,16 @@ fn execute_command(command:&str) {
 
 fn change_directory(args: Vec<&str>) {
     if args.len() < 2 {
-        println!("Usage: cd <path>");
+        println!("{}", Red.paint("Usage: cd <path>"));
         return;
     }
     let new_path = PathBuf::from(args[1]);
     if new_path.exists() && new_path.is_dir() {
         if let Err(e) = env::set_current_dir(&new_path) {
-            println!("Faild to change dir {}", e);
+            println!("{}", Red.paint(format!("Faild to change dir {}", e)));
         }
     } else {
-        println!("Directory not found: {}", new_path.display());
+        println!("{}", Red.paint(format!("Directory not found: {}", new_path.display().to_string())));
     }
 }
 
@@ -143,9 +124,9 @@ fn run_gxinstaller(args: Vec<&str>) {
 
 fn run_gxcore(args: Vec<&str>) {
     if args.len() < 2 {
-        println!("Error: This is not an available option in gxcore.");
+        println!("{}", Red.paint("Error: This is not an available option in gxcore."));
     } else if args[1] == "--start" {
-        println!("WARNING: IF YOU MAKE AN MISTAKE IN GXCORE THAN YOUR COMPUTER IS MAYBE UNUSEABLE!!!");
+        println!("{}", Red.paint("WARNING: IF YOU MAKE AN MISTAKE IN GXCORE THAN YOUR COMPUTER IS MAYBE UNUSEABLE!!!"));
         gxcore::start();
     }
 }
@@ -166,7 +147,7 @@ fn run_external_command(args: Vec<&str>) {
         }
 
         Err(e) => {
-            println!("{}", Red.paint(format!("Error command {} is not found as internal or external command: {}", args[0], e)));
+            println!("{}", Red.paint(format!("Error command is not found {}", e)));
         }
     }
 }
