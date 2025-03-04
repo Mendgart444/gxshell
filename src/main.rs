@@ -102,17 +102,17 @@ fn run_gxinstaller(args: Vec<&str>) {
     } else if args[1] == "--version"  {
         println!("gxinstaller version: {}", env_var::GXINSTALLER_VERSION);
     } else if args[1] == "--list"  {
-        println!("C/C++");
+        println!("mingw-w64");
         println!("Python");
         println!("*GXManager");
         println!("*GX IDE (like vscode but modern)");
         println!("git");
         println!("{}", Blue.paint("\n* means that it is not released yet"));
     } else if args[1] == "--install"  {
-        if args[2] == "CyberGX" {
-            gxinstaller::install_cybergx_default()
+        if args[2] == "mingw-w64" {
+            gxinstaller::install_mingw();
         } else {
-            println!("{}", Red.paint("Package not found. to show avaiable packages: gxinstaller --list"));
+            println!("{}", Red.paint("Package not found"));
         }
     } else if args[1] == "--update" {
         gxinstaller::update_all()
