@@ -1,4 +1,3 @@
-
 mod gxinstaller;
 mod gxcore;
 mod env_var;
@@ -48,6 +47,7 @@ fn execute_command(command:&str) {
 
     match parts[0] {
         "cd" => change_directory(parts),
+        "dev" => start_dev_mode(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),
         "version" => println!("{}", Green.paint(env_var::GXSHELL_VERSION)),
@@ -100,7 +100,7 @@ fn run_gxinstaller(args: Vec<&str>) {
         println!("  --update            updates all tools and software.");
 
     } else if args[1] == "--version"  {
-        println!("gxinstaller version: {}", env_var::GXINSTALLER_VERSION);
+        println!("gxinstaller version: {}", Green.paint(env_var::GXINSTALLER_VERSION));
     } else if args[1] == "--list"  {
         println!("mingw-w64");
         println!("Python");
@@ -129,6 +129,20 @@ fn run_gxcore(args: Vec<&str>) {
         gxcore::start();
     }
 }
+
+fn start_dev_mode(args: Vec<&str>) {
+    
+    if args.len() < 2 {
+        println!("{}", Red.paint("Error option not found in the dev mode"))
+    } else if args[1] == "--status" {
+        println!("{}", Green.paint("Your Status"));
+    } else {
+        println!("option not found.");
+    }
+    
+}
+
+
 
 fn run_external_command(args: Vec<&str>) {
     if args.is_empty() {
