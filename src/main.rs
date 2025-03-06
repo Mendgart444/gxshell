@@ -14,7 +14,7 @@ async fn main()  {
     let mut rl:Editor<(), rustyline::history::FileHistory> = Editor::<(), _>::new().expect("Faild to launch editor.");
     let _ = rl.load_history(".hystory");
 
-    updater::check_for_updates().await;
+    updater::check_and_update();
     
     
     println!("{}", Red.paint(format!("GXShell version {}", env_var::GXSHELL_VERSION)));
@@ -28,7 +28,7 @@ async fn main()  {
                 if command == "exit" {
                     break;
                 } else if command == "update" {
-                    updater::check_for_updates().await;
+                    updater::check_and_update();
                 }
                 let _ = rl.add_history_entry(command);
                 execute_command(command);

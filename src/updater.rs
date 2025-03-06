@@ -1,33 +1,37 @@
-use reqwest;
-use semver::Version;
+use self_update::backends::github::Update;
+use self_update::cargo_crate_version;
 use nu_ansi_term::Color::{Green, Red};
 use std::error::Error;
 
+const REPO_OWNER: &str = "Mendgart444";  // Dein GitHub Benutzername/Organisation
+const REPO_NAME: &str = "gxshell";         // Dein Repository-Name
 
+/// Prüft auf Updates und installiert automatisch die neueste Version
+pub fn check_and_update() {
+    println!("{}", Green.paint("Checking for updates..."));
 
-const UPDATE_URL:&str = "https://mendgart444.github.io/gxweb/gxshell_version.txt";
-
-const CURRENT_VERSION:&str = "0.1.0";
-
-pub async fn check_for_updates() {
-    match get_latest_version().await {
-        Ok(lastest_version) => {
-            let current_version = Version::parse(CURRENT_VERSION).unwrap_or_else(|_| Version::new(0,0,0));
-
-            if lastest_version > current_version {
-                println!("{}", Red.paint(format!("Update available lastest version: {}", lastest_version)));
-                println!("{}", Green.paint("Updating..."));
-            } else {
-                println!("{}", Green.paint("Lastest version is installed."));
-            }
-
-        }
-        Err(e) => println!("{}", Red.paint(format!("Error update check faild: {}", e))),
+    match perform_update() {
+        Ok(()) => println!("{}", Green.paint("Update successful! Restart GXShell to apply the changes...")),
+        Err(e) => println!("{}", Red.paint(format!("Error: faild to update: {}", e))),
     }
 }
 
-async fn get_latest_version() -> Result<Version, Box<dyn Error>> {
-    let response = reqwest::get(UPDATE_URL).await?.text().await?;
-    let version = Version::parse(response.trim())?;
-    Ok(version)
+/// Lädt das neueste Release von GitHub herunter und ersetzt die alte Datei
+fn perform_update() -> Result<(), Box<dyn Error>> {
+    let status = Update::configure()
+        .repo_owner(REPO_OWNER)
+        .repo_name(REPO_NAME)
+        .bin_name("gxcmd") // Name der Binärdatei auf GitHub Releases
+        .show_download_progress(true)
+        .current_version(cargo_crate_version!()) // Liest die aktuelle Version aus `Cargo.toml`
+        .build()?
+        .update()?;
+
+    if status.updated() {
+        println!("{}", Green.paint("update successful!"));
+    } else {
+        println!("{}", Green.paint("GXShell is already up to date!"));
+    }
+    
+    Ok(())
 }
