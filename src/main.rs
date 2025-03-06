@@ -1,16 +1,20 @@
 mod gxinstaller;
 mod gxcore;
 mod env_var;
+mod updater;
+
 use std::process::{Command, Stdio};
 use std::env;
 use std::path::PathBuf;
 use nu_ansi_term::Color::{Green, Red, Blue};
 use rustyline::Editor;
 
-
-fn main()  {
-    let mut rl = Editor::<(), _>::new().expect("Faild to launch editor.");
+#[tokio::main]
+async fn main()  {
+    let mut rl:Editor<(), rustyline::history::FileHistory> = Editor::<(), _>::new().expect("Faild to launch editor.");
     let _ = rl.load_history(".hystory");
+
+    updater::check_for_updates().await;
     
     
     println!("{}", Red.paint(format!("GXShell version {}", env_var::GXSHELL_VERSION)));
@@ -23,6 +27,8 @@ fn main()  {
                 let command = line.trim();
                 if command == "exit" {
                     break;
+                } else if command == "update" {
+                    updater::check_for_updates().await;
                 }
                 let _ = rl.add_history_entry(command);
                 execute_command(command);
@@ -47,6 +53,7 @@ fn execute_command(command:&str) {
 
     match parts[0] {
         "cd" => change_directory(parts),
+        "update" => println!(" "),
         "dev" => start_dev_mode(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),

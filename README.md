@@ -1,12 +1,12 @@
 # GX Shell info
 
-GX Shell is an shell for the Programming langue CyberGX.
+GX Shell is an shell for Devs and the Programming langue CyberGX.
 
-# How to install CyberGX in GX Shell?
+# How to install with gxinstaller in GX Shell?
 
-to install CyberGX run these commands:
+to install mingw-w64 run these commands:
 
-    gxinstaller --install cybergx::default
+    gxinstaller --install mingw-w64
 
 with this method you can install also other apps.
 to see the list run
