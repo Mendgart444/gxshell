@@ -136,6 +136,7 @@ fn start_dev_mode(args: Vec<&str>) {
         println!("{}", Red.paint("Error option not found in the dev mode"))
     } else if args[1] == "--status" {
         println!("{}", Green.paint("Your Status"));
+        println!("{}", Green.paint("info: the Dev mode has at the monent no features."));
     } else {
         println!("option not found.");
     }
