@@ -385,7 +385,7 @@ dependencies = [
 
 [[package]]
 name = "gxcmd"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "dirs",
  "git2",
@@ -394,6 +394,8 @@ dependencies = [
  "rustyline",
  "self_update",
  "semver",
+ "serde",
+ "serde_json",
  "subprocess",
  "sysinfo",
  "tokio",

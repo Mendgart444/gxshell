@@ -1,8 +1,8 @@
-mod gxinstaller;
 mod gxcore;
 mod env_var;
 mod updater;
 mod cyber_gx_interpreter;
+mod dev;
 
 use cyber_gx_interpreter::lexer::Lexer;
 //use cyber_gx_interpreter::interpreter::Interpreter;
@@ -56,13 +56,12 @@ fn execute_command(command:&str) {
     match parts[0] {
         "cd" => change_directory(parts),
         "update" => println!(" "),
-        "dev" => start_dev_mode(parts),
+        "dev" => dev::dev_mode(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),
         "version" => println!("{}", Green.paint(env_var::GXSHELL_VERSION)),
-        "gxinstaller" => run_gxinstaller(parts),
         "gxcore" => run_gxcore(parts),
-        "gxrun" => run_interpreter(parts),
+        "gx" => run_interpreter(parts),
         _ => run_external_command(parts),
     }
 
@@ -97,65 +96,20 @@ fn clear_screen() {
     println!("");
 }
 
-fn run_gxinstaller(args: Vec<&str>) {
-    if args.len() < 2 {
-        println!("{}", Red.paint("option not found. If you need help run: gxinstaller --help"));
-        return;
-    } else if args[1] == "--help"  {
-        println!("Options:");
-        println!("  --help              shows this message.");
-        println!("  --version           shows the version of gxinstaller.");
-        println!("  --install (option)  install the application or tool.");
-        println!("  --list              shows a list of the applications or tools you can install.");
-        println!("  --update            updates all tools and software.");
-
-    } else if args[1] == "--version"  {
-        println!("gxinstaller version: {}", Green.paint(env_var::GXINSTALLER_VERSION));
-    } else if args[1] == "--list"  {
-        println!("mingw-w64");
-        println!("Python");
-        println!("*GXManager");
-        println!("*GX IDE (like vscode but modern)");
-        println!("git");
-        println!("{}", Blue.paint("\n* means that it is not released yet"));
-    } else if args[1] == "--install"  {
-        if args[2] == "mingw-w64" {
-            gxinstaller::install_mingw();
-        } else {
-            println!("{}", Red.paint("Package not found"));
-        }
-    } else if args[1] == "--update" {
-        gxinstaller::update_all()
-    }
-
-
-}
-
 fn run_gxcore(args: Vec<&str>) {
     if args.len() < 2 {
-        println!("{}", Red.paint("Error: This is not an available option in gxcore."));
+        println!("{}", Red.paint("Error: start gxcore with --start"));
     } else if args[1] == "--start" {
         println!("{}", Red.paint("WARNING: IF YOU MAKE AN MISTAKE IN GXCORE THAN YOUR COMPUTER IS MAYBE UNUSEABLE!!!"));
         gxcore::start();
     }
 }
 
-fn start_dev_mode(args: Vec<&str>) {
-    
-    if args.len() < 2 {
-        println!("{}", Red.paint("Error option not found in the dev mode"))
-    } else if args[1] == "--status" {
-        println!("{}", Green.paint("Your Status"));
-        println!("{}", Green.paint("info: the Dev mode has at the monent no features."));
-    } else {
-        println!("option not found.");
-    }
-    
-}
+
 
 fn run_interpreter(args: Vec<&str>) {
     if args.len() < 2 {
-        println!("{}", Red.paint("Error: option not found"));
+        println!("{}", Red.paint("Usage: gx <filename>"));
         return;
     }
 
