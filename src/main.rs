@@ -2,15 +2,17 @@ mod gxinstaller;
 mod gxcore;
 mod env_var;
 mod updater;
+mod cyber_gx_interpreter;
 
+use cyber_gx_interpreter::lexer::Lexer;
+//use cyber_gx_interpreter::interpreter::Interpreter;
 use std::process::{Command, Stdio};
 use std::env;
 use std::path::PathBuf;
 use nu_ansi_term::Color::{Green, Red, Blue};
 use rustyline::Editor;
 
-#[tokio::main]
-async fn main()  {
+fn main()  {
     let mut rl:Editor<(), rustyline::history::FileHistory> = Editor::<(), _>::new().expect("Faild to launch editor.");
     let _ = rl.load_history(".hystory");
 
@@ -27,7 +29,7 @@ async fn main()  {
                 let command = line.trim();
                 if command == "exit" {
                     break;
-                } else if command == "update" {
+                } else if  command == "update" {
                     updater::check_and_update();
                 }
                 let _ = rl.add_history_entry(command);
@@ -60,6 +62,7 @@ fn execute_command(command:&str) {
         "version" => println!("{}", Green.paint(env_var::GXSHELL_VERSION)),
         "gxinstaller" => run_gxinstaller(parts),
         "gxcore" => run_gxcore(parts),
+        "gxrun" => run_interpreter(parts),
         _ => run_external_command(parts),
     }
 
@@ -148,6 +151,25 @@ fn start_dev_mode(args: Vec<&str>) {
         println!("option not found.");
     }
     
+}
+
+fn run_interpreter(args: Vec<&str>) {
+    if args.len() < 2 {
+        println!("{}", Red.paint("Error: option not found"));
+        return;
+    }
+
+    let filename = args[1];
+    match std::fs::read_to_string(filename) {
+        Ok(code) => {
+            let mut lexer = Lexer::new(code);
+            let tokens = lexer.tokenize();
+            cyber_gx_interpreter::interpreter::Interpreter::execute(tokens);
+        }
+        Err(e) => {
+            println!("{}", Red.paint(format!("Error: Faild to open: {}", e)));
+        }
+    }
 }
 
 
