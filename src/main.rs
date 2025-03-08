@@ -55,6 +55,14 @@ fn execute_command(command:&str) {
 
     match parts[0] {
         "cd" => change_directory(parts),
+        "gxcompiler" => {
+            if parts.len() < 3 {
+                println!("Usage: compile <source.gx> <output>");
+                return;
+            }
+            let source_code = std::fs::read_to_string(parts[1]).expect("Failed to read source file");
+            gxcompiler::compile(&source_code, parts[2]);
+        },
         "update" => println!(" "),
         "dev" => dev::dev_mode(parts),
         "dir" => list_directory(),
