@@ -4,6 +4,7 @@ mod updater;
 mod cyber_gx_interpreter;
 mod dev;
 
+use cyber_gx_interpreter::gxcompiler;
 use cyber_gx_interpreter::lexer::Lexer;
 //use cyber_gx_interpreter::interpreter::Interpreter;
 use std::process::{Command, Stdio};
@@ -61,7 +62,8 @@ fn execute_command(command:&str) {
                 return;
             }
             let source_code = std::fs::read_to_string(parts[1]).expect("Failed to read source file");
-            gxcompiler::compile(&source_code, parts[2]);
+            gxcompiler::compile_to_rust(&source_code, parts[2]);
+            
         },
         "update" => println!(" "),
         "dev" => dev::dev_mode(parts),

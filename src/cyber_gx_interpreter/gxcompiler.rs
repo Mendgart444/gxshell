@@ -1,46 +1,27 @@
-use inkwell::context::Context;
-use inkwell::targets::{InitializationConfig, Target, TargetMachine, TargetTriple};
-use inkwell::OptimizationLevel;
-use std::process::Command;
 use std::fs;
+use std::process::Command;
 
-pub fn compile(source_code: &str, output_filename: &str) {
-    let context = Context::create();
-    let module = context.create_module("gx_compiler");
-    let builder = context.create_builder();
+pub fn compile_to_rust(source_code: &str, output_filename: &str) {
+    let mut rust_code = String::from("fn main() {\n");
 
-    let i32_type = context.i32_type();
-    let fn_type = i32_type.fn_type(&[], false);
-    let function = module.add_function("main", fn_type, None);
-    let entry = context.append_basic_block(function, "entry");
+    for line in source_code.lines() {
+        let line = line.trim();
+        if line.starts_with("println << ") {
+            let content = line.trim_start_matches("println << ").trim_end_matches(";");
+            rust_code.push_str(&format!("    println!({});\n", content));
+        }
+    }
 
-    builder.position_at_end(entry);
-    let return_value = i32_type.const_int(42, false); // Beispiel: Programm gibt 42 zurück
-    builder.build_return(Some(&return_value));
+    rust_code.push_str("}\n");
 
-    Target::initialize_all(&InitializationConfig::default());
-    let triple = TargetMachine::get_default_triple();
-    let target = Target::from_triple(&triple).unwrap();
-    let machine = target
-        .create_target_machine(
-            &triple,
-            "generic",
-            "",
-            OptimizationLevel::None,
-            inkwell::targets::RelocMode::Default,
-            inkwell::targets::CodeModel::Default,
-        )
-        .unwrap();
+    let rust_file = format!("{}.rs", output_filename);
+    fs::write(&rust_file, &rust_code).expect("Failed to write Rust file");
 
-    let file_type = inkwell::targets::FileType::Object;
-    let obj_filename = format!("{}.o", output_filename);
-    machine.write_to_file(&module, file_type, std::path::Path::new(&obj_filename)).unwrap();
-
-    // Linken mit Clang
-    let _ = Command::new("clang")
-        .args([&obj_filename, "-o", output_filename])
+    // Kompilieren mit rustc
+    let _ = Command::new("rustc")
+        .args([&rust_file, "-o", output_filename])
         .output()
-        .expect("Failed to link the object file");
+        .expect("Failed to compile Rust code");
 
-    fs::remove_file(obj_filename).ok(); // Temporäre Datei löschen
+    fs::remove_file(rust_file).ok(); // Temporäre Datei löschen
 }
