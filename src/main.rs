@@ -8,7 +8,6 @@ use cyber_gx_interpreter::gxcompiler::Compiler;
 use std::process::{Command, Stdio};
 use std::env;
 use std::path::PathBuf;
-use nu_ansi_term::Color::{Green, Red};
 use rustyline::Editor;
 
 fn main()  {
@@ -16,7 +15,7 @@ fn main()  {
     let _ = rl.load_history(".history");
 
     
-    println!("{}", Red.paint(format!("GXShell version {}", env_var::GXSHELL_VERSION)));
+    println!("GXShell version {}", env_var::GXSHELL_VERSION);
     loop {
         let current_dir: PathBuf = env::current_dir().unwrap_or(PathBuf::from("C:\\"));
         let prompt = format!("{}> ", current_dir.display().to_string().trim());
@@ -53,7 +52,7 @@ fn execute_command(command: &str) {
         "dev" => dev::dev_mode(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),
-        "version" => println!("{}", Green.paint(env_var::GXSHELL_VERSION)),
+        "version" => println!("{}", env_var::GXSHELL_VERSION),
         "gxcore" => run_gxcore(parts),
         "gx" => run_compiler(parts),
         _ => run_external_command(parts),
@@ -62,16 +61,16 @@ fn execute_command(command: &str) {
 
 fn change_directory(args: Vec<&str>) {
     if args.len() < 2 {
-        println!("{}", Red.paint("Usage: cd <path>"));
+        println!("Usage: cd <path>");
         return;
     }
     let new_path = PathBuf::from(args[1]);
     if new_path.exists() && new_path.is_dir() {
         if let Err(e) = env::set_current_dir(&new_path) {
-            println!("{}", Red.paint(format!("Failed to change dir {}", e)));
+            println!("Failed to change dir {}", e);
         }
     } else {
-        println!("{}", Red.paint(format!("Directory not found: {}", new_path.display())));
+        println!("Directory not found: {}", new_path.display());
     }
 }
 
@@ -85,22 +84,28 @@ fn list_directory() {
 }
 
 fn clear_screen() {
-    print!("\x1B[2J\x1B[1;1H");
-    println!("");
+    #[cfg(windows)]
+    {
+        let _ = Command::new("cmd").arg("/c").arg("cls").status();
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = Command::new("clear").status();
+    }
 }
 
 fn run_gxcore(args: Vec<&str>) {
     if args.len() < 2 {
-        println!("{}", Red.paint("Error: start gxcore with --start"));
+        println!("Error: start gxcore with --start");
     } else if args[1] == "--start" {
-        println!("{}", Red.paint("WARNING: IF YOU MAKE A MISTAKE IN GXCORE THEN YOUR COMPUTER MAY BE UNUSABLE!!!"));
+        println!("WARNING: IF YOU MAKE A MISTAKE IN GXCORE THEN YOUR COMPUTER MAY BE UNUSABLE!!!");
         gxcore::start();
     }
 }
 
 fn run_compiler(args: Vec<&str>) {
     if args.len() < 3 {
-        println!("{}", Red.paint("Usage: gx <filename> <outputname>"));
+        println!("Usage: gx <filename> <outputname>");
         return;
     }
 
@@ -109,7 +114,7 @@ fn run_compiler(args: Vec<&str>) {
             Compiler::compile_to_rust(&source_code, args[2]);
         }
         Err(_) => {
-            println!("{}", Red.paint("Fehler: Datei konnte nicht gelesen werden."));
+            println!("Fehler: Datei konnte nicht gelesen werden.");
         }
     }
 }
@@ -130,7 +135,7 @@ fn run_external_command(args: Vec<&str>) {
         }
 
         Err(e) => {
-            println!("{}", Red.paint(format!("Error command not found: {}", e)));
+            println!("Error command not found: {}", e);
         }
     }
 }

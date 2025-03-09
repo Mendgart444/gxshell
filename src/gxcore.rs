@@ -4,7 +4,7 @@ use std::fs;
 use std::path::PathBuf;
 use sysinfo::System;
 use rustyline::Editor;
-use nu_ansi_term::Color::Red;
+
 
 
 pub fn start() {
@@ -15,7 +15,7 @@ pub fn start() {
     
     
     
-    println!("{}", Red.paint("GXCORE version 0.1.0"));
+    println!("GXCORE version 0.1.0");
     loop {
         let current_dir:PathBuf = env::current_dir().unwrap_or(PathBuf::from("C:\\"));
         let prompt = format!("{}> ", current_dir.display().to_string().trim());
@@ -52,7 +52,7 @@ fn execute_command(command:&str){
             if is_admin() {
                 bios(parts);
             } else {
-                println!("{}", Red.paint("Error, you need admin rights for this"));
+                println!("Error, you need admin rights for this");
             }
         },
         "sysinfo" => system_info(),
@@ -113,10 +113,10 @@ fn change_directory(args: Vec<&str>) {
     let new_path = PathBuf::from(args[1]);
     if new_path.exists() && new_path.is_dir() {
         if let Err(e) = env::set_current_dir(&new_path) {
-            println!("{}", Red.paint(format!("Faild to change dir {}", e)));
+            println!("Faild to change dir {}", e);
         }
     } else {
-        println!("{}", Red.paint(format!("Directory not found: {}", new_path.display().to_string())));
+        println!("Directory not found: {}", new_path.display().to_string());
     }
 }
 
@@ -124,29 +124,36 @@ fn list_directory() {
     let current_dir = env::current_dir().unwrap();
     for entry in current_dir.read_dir().unwrap() {
         if let Ok(entry) = entry {
-            println!("{}", Red.paint(entry.file_name().to_string_lossy()));
+            println!("{}", entry.file_name().to_string_lossy());
         }
     }
 }
 
 fn clear_screen() {
-    print!("\x1B[2J\x1B[1;1H");
-    println!(" ");
+    #[cfg(windows)]
+    {
+        let _ = Command::new("cmd").arg("/c").arg("cls").status();
+    }
+
+    #[cfg(not(windows))]
+    {
+        let _ = Command::new("clear").status();
+    }
 }
 
 fn bios(args: Vec<&str>) {
     if args.len() < 2 {
-        println!("{}", Red.paint("Error that command is not found in the bios syntax."));
+        println!("Error that command is not found in the bios syntax.");
         return;
     } else if args[1] == "--read_var"{
         let path = "/sys/firmware/efefivars/BootOrder-8be4df61-93ca-11d2-aa0d-00e098032b8c";
 
         match fs::read(path) {
             Ok(data) => {
-                println!("{}", Red.paint(format!("BootOrder (raw): {:?}", &data)));
+                println!("BootOrder (raw): {:?}", &data);
             }
             Err(e) => {
-                eprintln!("{}", Red.paint(format!("Error: could not read UEFI-Variable: {}", e)));
+                eprintln!("Error: could not read UEFI-Variable: {}", e);
             }
         
         }
@@ -179,7 +186,7 @@ fn run_external_command(args: Vec<&str>) {
         }
 
         Err(e) => {
-            println!("{}", Red.paint(format!("Error command {} is not found as internal or external command: {}", args[0], e)));
+            println!("Error command {} is not found as internal or external command: {}", args[0], e);
         }
     }
 }
