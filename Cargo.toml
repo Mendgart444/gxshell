@@ -1,5 +1,5 @@
 [package]
-name = "gxcmd"
+name = "gxshell"
 authors = ["Raffael <Mendgart444>"]
 description = "A shell for Devs. inspired by the windows cmd, msys and git bash"
 version = "0.1.2"

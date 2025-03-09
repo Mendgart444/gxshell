@@ -1,5 +1,4 @@
 use std::process::{Command, Stdio};
-use nu_ansi_term::Color::{Red, Blue};
 use std::io;
 use serde::{Serialize, Deserialize};
 use std::fs::File;
@@ -18,12 +17,12 @@ pub fn dev_mode(args: Vec<&str>) {
     //let run_cargo_version:Vec<&str> = vec!["cargo", "version"];
 
     if args.len() < 2 {
-        println!("{}", Blue.paint("options:"));
-        println!("{}", Blue.paint("--status    view a compact dashboard."));
-        println!("{}", Blue.paint("--setup     set up the development environment."));
+        println!("options:");
+        println!("--status    view a compact dashboard.");
+        println!("--setup     set up the development environment.");
     } else if args[1] == "--status" {
-        println!("{}", Blue.paint("your dashboard:"));
-        println!("{}", Blue.paint("git status:"));
+        println!("your dashboard:");
+        println!("git status:");
 
         run_external_command(run_git_status);
 
@@ -47,8 +46,7 @@ pub fn dev_mode(args: Vec<&str>) {
 
 fn set_up_development_environment() {
     let mut input:String = String::new();
-
-    println!("{}", Blue.paint("Setting up the development environment..."));
+    println!("Setting up the development environment...");
     println!("Please choose your prefered programming languages: for example: rust go python.");
 
     io::stdin().read_line(&mut input).expect("Failed to read line");
@@ -77,7 +75,7 @@ fn run_external_command(args: Vec<&str>) {
         }
 
         Err(e) => {
-            println!("{}", Red.paint(format!("Error command is not found {}", e)));
+            println!("Error command is not found {}", e);
         }
     }
 }
