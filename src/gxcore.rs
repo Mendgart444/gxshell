@@ -4,7 +4,7 @@ use std::fs;
 use std::path::PathBuf;
 use sysinfo::System;
 use rustyline::Editor;
-use nu_ansi_term::Color::{Red, Blue};
+use nu_ansi_term::Color::Red;
 
 
 pub fn start() {
@@ -14,10 +14,11 @@ pub fn start() {
     let _ = rl.load_history(".hystory");
     
     
+    
     println!("{}", Red.paint("GXCORE version 0.1.0"));
     loop {
         let current_dir:PathBuf = env::current_dir().unwrap_or(PathBuf::from("C:\\"));
-        let prompt = format!("{}> ", Blue.paint(current_dir.display().to_string()));
+        let prompt = format!("{}> ", current_dir.display().to_string().trim());
         
         match rl.readline(&prompt) {
             Ok(line) => {
@@ -34,6 +35,7 @@ pub fn start() {
     }
   
     let _ = rl.save_history(".hystory");
+
 
 
 }

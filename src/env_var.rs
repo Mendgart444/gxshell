@@ -1,1 +1,1 @@
-pub const  GXSHELL_VERSION:&'static str = "0.1.1";
+pub const  GXSHELL_VERSION:&'static str = "0.1.2";
