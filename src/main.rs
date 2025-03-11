@@ -9,13 +9,15 @@ use std::process::{Command, Stdio};
 use std::env;
 use std::path::PathBuf;
 use rustyline::Editor;
+use nu_ansi_term::Color::{Red, LightRed, Yellow, Blue, Green};
 
 fn main()  {
-    let mut rl: Editor<(), rustyline::history::FileHistory> = Editor::<(), _>::new().expect("Failed to launch editor.");
+    let editor_err:String = format!("{}", Red.paint("Failed to launch editor."));
+    let mut rl: Editor<(), rustyline::history::FileHistory> = Editor::<(), _>::new().expect(&editor_err);
     let _ = rl.load_history(".history");
 
     
-    println!("GXShell version {}", env_var::GXSHELL_VERSION);
+    println!("{}", LightRed.paint(format!("GXShell version {}", env_var::GXSHELL_VERSION)));
     loop {
         let current_dir: PathBuf = env::current_dir().unwrap_or(PathBuf::from("C:\\"));
         let prompt = format!("{}> ", current_dir.display().to_string().trim());
@@ -25,7 +27,7 @@ fn main()  {
                 if command == "exit" {
                     break;
                 } else if command == "update" {
-                    println!("Updater is not available yet.");
+                    println!("{}", Blue.paint("Updater is not available yet."));
                 }
                 let _ = rl.add_history_entry(command);
                 execute_command(command);
@@ -48,11 +50,10 @@ fn execute_command(command: &str) {
 
     match parts[0] {
         "cd" => change_directory(parts),
-        "update" => println!(" "),
         "dev" => dev::dev_mode(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),
-        "version" => println!("{}", env_var::GXSHELL_VERSION),
+        "version" => println!("{}", Green.paint(env_var::GXSHELL_VERSION)),
         "gxcore" => run_gxcore(parts),
         "gx" => run_compiler(parts),
         _ => run_external_command(parts),
@@ -61,16 +62,16 @@ fn execute_command(command: &str) {
 
 fn change_directory(args: Vec<&str>) {
     if args.len() < 2 {
-        println!("Usage: cd <path>");
+        println!("{}", Blue.paint("Usage: cd <path>"));
         return;
     }
     let new_path = PathBuf::from(args[1]);
     if new_path.exists() && new_path.is_dir() {
         if let Err(e) = env::set_current_dir(&new_path) {
-            println!("Failed to change dir {}", e);
+            println!("{}", Red.paint(format!("Failed to change dir {}", e)));
         }
     } else {
-        println!("Directory not found: {}", new_path.display());
+        println!("{}", Red.paint(format!("Directory not found: {}", new_path.display())));
     }
 }
 
@@ -96,16 +97,16 @@ fn clear_screen() {
 
 fn run_gxcore(args: Vec<&str>) {
     if args.len() < 2 {
-        println!("Error: start gxcore with --start");
+        println!("{}", Red.paint("Error: start gxcore with --start"));
     } else if args[1] == "--start" {
-        println!("WARNING: IF YOU MAKE A MISTAKE IN GXCORE THEN YOUR COMPUTER MAY BE UNUSABLE!!!");
+        println!("{}", Yellow.paint("WARNING: IF YOU MAKE A MISTAKE IN GXCORE THEN YOUR COMPUTER MAY BE UNUSABLE!!!"));
         gxcore::start();
     }
 }
 
 fn run_compiler(args: Vec<&str>) {
     if args.len() < 3 {
-        println!("Usage: gx <filename> <outputname>");
+        println!("{}", Blue.paint("Usage: gx <filename> <outputname>"));
         return;
     }
 
@@ -114,7 +115,7 @@ fn run_compiler(args: Vec<&str>) {
             Compiler::compile_to_rust(&source_code, args[2]);
         }
         Err(_) => {
-            println!("Fehler: Datei konnte nicht gelesen werden.");
+            println!("{}", Red.paint("Error: faild to read data."));
         }
     }
 }
@@ -135,7 +136,7 @@ fn run_external_command(args: Vec<&str>) {
         }
 
         Err(e) => {
-            println!("Error command not found: {}", e);
+            println!("{}", Red.paint(format!("Error command not found: {}", e)));
         }
     }
 }
