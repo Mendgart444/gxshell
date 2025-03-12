@@ -1,9 +1,5 @@
 use std::process::{Command, Stdio};
-use std::io;
 use serde::{Serialize, Deserialize};
-use std::fs::File;
-use std::fs::read_to_string;
-use std::io::Write;
 
 
 #[derive(Serialize, Deserialize)]
@@ -26,18 +22,7 @@ pub fn dev_mode(args: Vec<&str>) {
 
         run_external_command(run_git_status);
 
-        let json_string = read_to_string("languages.json")
-            .expect("could not read JSON file");
-
-        // JSON in Rust-Struktur umwandeln
-        let data: Language = serde_json::from_str(&json_string)
-            .expect("something went wrong while parsing JSON");
-
-        // Sprachen ausgeben
-        println!("Saved languages:");
-        for lang in data.names.iter() {
-            println!("- {}", lang);
-        }
+        
 
     } else if args[1] == "--setup" {
         set_up_development_environment();
@@ -45,18 +30,7 @@ pub fn dev_mode(args: Vec<&str>) {
 }
 
 fn set_up_development_environment() {
-    let mut input:String = String::new();
-    println!("Setting up the development environment...");
-    println!("Please choose your prefered programming languages: for example: rust go python.");
-
-    io::stdin().read_line(&mut input).expect("Failed to read line");
-    let args: Vec<String> = input.trim().split_whitespace().map(|s| s.to_string()).collect();
-
-    let data:Language = Language { names: args };
     
-    let json = serde_json::to_string_pretty(&data).unwrap();
-    let mut file = File::create("languages.json").expect("Unable to create file");
-    file.write_all(json.as_bytes()).expect("Unable to write to file");
 }
 
 fn run_external_command(args: Vec<&str>) {
@@ -75,7 +49,7 @@ fn run_external_command(args: Vec<&str>) {
         }
 
         Err(e) => {
-            println!("Error command is not found {}", e);
+            println!("Failed to remove temporary Rust file: {}", e);
         }
     }
 }
