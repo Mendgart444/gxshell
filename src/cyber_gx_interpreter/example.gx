@@ -1,0 +1,23 @@
+gxfn main() {
+    var a:String = "World";
+    println << "Hello, {}" << a;
+
+    var color:String = "green"
+    // bool ist der Rückgabe wert
+    var analyze:color_analyze(bool) = color_analyze(color);
+    println << analyze;
+}
+
+//bool zeigt Rückgabe wert
+gxfn:bool color_analyze(color:String) {
+    if color == "green" {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/* ausgabe: 
+Hello, World
+true
+*/
