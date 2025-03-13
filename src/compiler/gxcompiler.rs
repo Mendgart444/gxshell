@@ -76,12 +76,23 @@ impl Compiler {
                     .map(|(name, typ)| format!("{}: {}", name, typ))
                     .collect::<Vec<String>>()
                     .join(", ");
-                format!(
-                    "fn {}({}) -> bool {{\n{}\n}}\n",
-                    name,
-                    params_str,
-                    Compiler::generate_rust_code(body)
-                )
+            
+                // Wenn `main`, dann kein `-> bool`
+                if name == "main" {
+                    format!(
+                        "fn {}({}) {{\n{}\n}}\n",
+                        name,
+                        params_str,
+                        Compiler::generate_rust_code(body)
+                    )
+                } else {
+                    format!(
+                        "fn {}({}) -> bool {{\n{}\n}}\n",
+                        name,
+                        params_str,
+                        Compiler::generate_rust_code(body)
+                    )
+                }
             }
             ASTNode::FunctionCall(name, args) => {
                 let args_str = args
