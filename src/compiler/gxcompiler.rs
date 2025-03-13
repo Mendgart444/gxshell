@@ -2,17 +2,22 @@ use crate::compiler::lexer::Lexer;
 use crate::compiler::parser::{ASTNode, Parser};
 use std::fs;
 use std::process::Command;
-use nu_ansi_term::Color::Red;
+use nu_ansi_term::Color::{Red, Blue};
 
 pub struct Compiler;
 
 impl Compiler {
     pub fn compile_to_rust(source_code: &str, output_filename: &str) {
+        println!("{}", Blue.paint("[INFO] Starting process..."));
+        println!("{}", Blue.paint("[INFO] Starting lexer..."));
         let mut lexer = Lexer::new(source_code.to_string());
         let tokens = lexer.tokenize();
+        
+        println!("{}", Blue.paint("[INFO] Starting Parser..."));
 
         let mut parser = Parser::new(tokens);
         if let Some(ast) = parser.parse() {
+            println!("{}", Blue.paint("[INFO] Parsing the code..."));
             let rust_code = Compiler::generate_rust_code(&ast);
 
             let rust_file = format!("{}.rs", output_filename);
