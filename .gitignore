@@ -2,6 +2,6 @@
 
 .history
 
-test.gx
+src/compiler/test.gx
 
 languages.json
