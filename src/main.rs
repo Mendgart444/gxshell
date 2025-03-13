@@ -1,10 +1,10 @@
 mod gxcore;
 mod env_var;
 mod updater;
-mod cyber_gx_interpreter;
+mod compiler;
 mod dev;
 
-use cyber_gx_interpreter::gxcompiler::Compiler;
+use compiler::gxcompiler::Compiler;
 use std::process::{Command, Stdio};
 use std::env;
 use std::path::PathBuf;

@@ -1,0 +1,108 @@
+use crate::compiler::lexer::Lexer;
+use crate::compiler::parser::{ASTNode, Parser};
+use std::fs;
+use std::process::Command;
+use nu_ansi_term::Color::Red;
+
+pub struct Compiler;
+
+impl Compiler {
+    pub fn compile_to_rust(source_code: &str, output_filename: &str) {
+        let mut lexer = Lexer::new(source_code.to_string());
+        let tokens = lexer.tokenize();
+
+        let mut parser = Parser::new(tokens);
+        if let Some(ast) = parser.parse() {
+            let rust_code = Compiler::generate_rust_code(&ast);
+
+            let rust_file = format!("{}.rs", output_filename);
+            if let Err(e) = fs::write(&rust_file, &rust_code) {
+                eprintln!("{}", Red.paint(format!("Error: Faild to Write Rust File: {}", e)));
+                return;
+            }
+            let error1: String = Red.paint("Error: could not compiler rust file").to_string();
+
+            // 🚀 Rust-Code kompilieren
+            let output = Command::new("rustc")
+                .args([&rust_file, "-o", output_filename])
+                .output()
+                .expect(&error1);
+
+            if !output.status.success() {
+                eprintln!("{}", Red.paint(format!("rustc error: {}", output.status)));
+                eprintln!("{}", Red.paint(format!("stdout: {}", String::from_utf8_lossy(&output.stdout))));
+                eprintln!("{}", Red.paint(format!("stderr: {}", String::from_utf8_lossy(&output.stderr))));
+                return;
+            }
+
+            // Temporäre Rust-Datei entfernen
+            if let Err(e) = fs::remove_file(&rust_file) {
+                eprintln!("{}", Red.paint(format!("Error: faild to delete temp file: {}", e)));
+            }
+        } else {
+            eprintln!("{}", Red.paint("Error: Could not Parsing the code."));
+        }
+    }
+
+    fn generate_rust_code(ast: &ASTNode) -> String {
+        match ast {
+            ASTNode::Main(body) => {
+                let mut code = String::from("fn main() {\n");
+                for node in body {
+                    code.push_str(&Compiler::generate_rust_code(node));
+                }
+                code.push_str("}\n");
+                code
+            }
+            ASTNode::Println(args) => {
+                let formatted_string: String = args
+                    .iter()
+                    .map(|arg| Compiler::generate_rust_code(arg))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                format!("    println!(\"{{}}\", {});\n", formatted_string)
+            }
+            ASTNode::Var(name, value) => {
+                format!("    let {} = {};\n", name, Compiler::generate_rust_code(value))
+            }
+            ASTNode::Function(name, params, body) => {
+                let params_str = params
+                    .iter()
+                    .map(|(name, typ)| format!("{}: {}", name, typ))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                format!(
+                    "fn {}({}) -> bool {{\n{}\n}}\n",
+                    name,
+                    params_str,
+                    Compiler::generate_rust_code(body)
+                )
+            }
+            ASTNode::FunctionCall(name, args) => {
+                let args_str = args
+                    .iter()
+                    .map(|arg| Compiler::generate_rust_code(arg))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                format!("    {}({});\n", name, args_str)
+            }
+            ASTNode::If(condition, body, else_body) => {
+                let mut code = format!(
+                    "if {} {{\n{}\n}}",
+                    Compiler::generate_rust_code(condition),
+                    Compiler::generate_rust_code(body)
+                );
+                if let Some(else_body) = else_body {
+                    code.push_str(&format!(" else {{\n{}\n}}", Compiler::generate_rust_code(else_body)));
+                }
+                code
+            }
+            ASTNode::Return(expression) => format!("    return {};\n", Compiler::generate_rust_code(expression)),
+            ASTNode::Bool(value) => format!("{}", value),
+            ASTNode::StringLiteral(value) => format!("\"{}\"", value),
+            ASTNode::Identifier(name) => name.clone(),
+            #[allow(unreachable_patterns)]
+            _ => String::new(),
+        }
+    }
+}
