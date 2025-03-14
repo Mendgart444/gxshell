@@ -1,3 +1,0 @@
-gxfn main() {
-    println << "Hello, world";
-}
