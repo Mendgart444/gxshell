@@ -14,7 +14,11 @@ use nu_ansi_term::Color::{Red, LightRed, Yellow, Blue, Green};
 fn main()  {
     let editor_err:String = format!("{}", Red.paint("Failed to launch editor."));
     let mut rl: Editor<(), rustyline::history::FileHistory> = Editor::<(), _>::new().expect(&editor_err);
-    let _ = rl.load_history(".history");
+    let history_path: PathBuf = get_history_path();
+    
+    if rl.load_history(&history_path).is_err() {
+        println!("{}", Red.paint("No .history data found"));
+    }
 
     
     println!("{}", LightRed.paint(format!("GXShell version {}", env_var::GXSHELL_VERSION)));
@@ -26,9 +30,8 @@ fn main()  {
                 let command = line.trim();
                 if command == "exit" {
                     break;
-                } else if command == "update" {
-                    println!("{}", Blue.paint("Updater is not available yet."));
                 }
+
                 let _ = rl.add_history_entry(command);
                 execute_command(command);
             }
@@ -37,7 +40,9 @@ fn main()  {
         }
     }
 
-    let _ = rl.save_history(".history");
+    if let Err(e) = rl.save_history(&history_path) {
+        eprintln!("{}", Red.paint(format!("Error: Could not save history data: {}", e)));
+    }
     
 }
 
@@ -58,6 +63,17 @@ fn execute_command(command: &str) {
         "gx" => run_compiler(parts),
         _ => run_external_command(parts),
     }
+}
+
+fn get_history_path() -> PathBuf {
+    if cfg!(target_os = "windows") {
+        env::var("USERPROFILE")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| PathBuf::from("."))
+    } else {
+        dirs::home_dir().unwrap_or_else(|| PathBuf::from("."))
+    }
+    .join(".history")
 }
 
 fn change_directory(args: Vec<&str>) {
