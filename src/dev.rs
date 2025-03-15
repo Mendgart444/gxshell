@@ -1,3 +1,5 @@
+use crate::env_var;
+
 use std::process::{Command, Stdio};
 use serde::{Serialize, Deserialize};
 
@@ -10,7 +12,9 @@ struct Language {
 
 pub fn dev_mode(args: Vec<&str>) {
     let run_git_status:Vec<&str> = vec!["git", "status"];
-    //let run_cargo_version:Vec<&str> = vec!["cargo", "version"];
+    let run_cargo_version:Vec<&str> = vec!["cargo", "version"];
+    let gcc:Vec<&str> = vec!["gcc", "--version"];
+    let gpp:Vec<&str> = vec!["g++", "--version"]; 
 
     if args.len() < 2 {
         println!("options:");
@@ -22,16 +26,19 @@ pub fn dev_mode(args: Vec<&str>) {
 
         run_external_command(run_git_status);
 
-        
+        println!("versions of gcc, g++, cargo, and gxshell\n");
 
-    } else if args[1] == "--setup" {
-        set_up_development_environment();
+        run_external_command(gcc);
+        print!("\n");
+        run_external_command(gpp);
+        print!("\n");
+        run_external_command(run_cargo_version);
+        print!("\n");
+        println!("{}", env_var::GXSHELL_VERSION);
+
     }
 }
 
-fn set_up_development_environment() {
-    
-}
 
 fn run_external_command(args: Vec<&str>) {
     if args.is_empty() {
@@ -49,7 +56,7 @@ fn run_external_command(args: Vec<&str>) {
         }
 
         Err(e) => {
-            println!("Failed to remove temporary Rust file: {}", e);
+            println!("faild to run command {}", e);
         }
     }
 }

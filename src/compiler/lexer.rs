@@ -1,8 +1,9 @@
 #[derive(Debug, PartialEq)]
 pub enum TokenType {
-    Gxfn, Var, Println, String, #[allow(dead_code)] Bool, Colon, 
-    DoubleLessThan, Identifier, #[allow(dead_code)] If, #[allow(dead_code)] Else, #[allow(dead_code)] Return, 
+    Gxfn, Var, Println, String, Bool, Colon, 
+    DoubleLessThan, Identifier, If, Else, Return, 
     Equal, OpenParen, CloseParen, Comma, End, 
+    Indicator, Plus, Minus, Multiply, Divide,
 }
 
 #[derive(Debug)]
@@ -22,15 +23,19 @@ impl Lexer {
     }
 
     pub fn tokenize(&mut self) -> Vec<Token> {
-        let mut tokens = Vec::new();
+        let mut tokens: Vec<Token> = Vec::new();
 
         while self.position < self.source.len() {
-            let current_char = self.source.chars().nth(self.position).unwrap();
+            let current_char: char = self.source.chars().nth(self.position).unwrap();
 
             match current_char {
                 'g' if self.source[self.position..].starts_with("gxfn") => {
                     tokens.push(Token { token_type: TokenType::Gxfn, value: "gxfn".to_string() });
                     self.position += 4;
+                }
+                'i' if self.source[self.position..].starts_with("if") => {
+                    tokens.push(Token { token_type: TokenType::If, value: "if".to_string() });
+                    self.position += 2;
                 }
                 'v' if self.source[self.position..].starts_with("var") => {
                     tokens.push(Token { token_type: TokenType::Var, value: "var".to_string() });
@@ -39,6 +44,22 @@ impl Lexer {
                 'p' if self.source[self.position..].starts_with("println") => {
                     tokens.push(Token { token_type: TokenType::Println, value: "println".to_string() });
                     self.position += 7;
+                }
+                't' if self.source[self.position..].starts_with("true") => {
+                    tokens.push(Token { token_type: TokenType::Bool, value: "true".to_string() });
+                    self.position += 4;
+                }
+                'r' if self.source[self.position..].starts_with("return") => {
+                    tokens.push(Token { token_type: TokenType::Return, value: "return".to_string() });
+                    self.position += 6;
+                }
+                'f' if self.source[self.position..].starts_with("false") => {
+                    tokens.push(Token { token_type: TokenType::Bool, value: "false".to_string() });
+                    self.position += 5;
+                }
+                'e' if self.source[self.position..].starts_with("else") => {
+                    tokens.push(Token { token_type: TokenType::Else, value: "else".to_string() });
+                    self.position += 4;
                 }
                 '=' => {
                     tokens.push(Token { token_type: TokenType::Equal, value: "=".to_string() });
@@ -56,21 +77,41 @@ impl Lexer {
                     tokens.push(Token { token_type: TokenType::End, value: ";".to_string() });
                     self.position += 1;
                 }
+                ':' => {
+                    tokens.push(Token { token_type: TokenType::Indicator, value: ":".to_string() });
+                    self.position += 1;
+                }
+                '+' => {
+                    tokens.push(Token { token_type: TokenType::Plus, value: "+".to_string() });
+                    self.position += 1;
+                }
+                '-' => {
+                    tokens.push(Token { token_type: TokenType::Minus, value: "-".to_string() });
+                    self.position += 1;
+                }
+                '*' => {
+                    tokens.push(Token { token_type: TokenType::Multiply, value: "*".to_string() });
+                    self.position += 1;
+                }
+                '/' => {
+                    tokens.push(Token { token_type: TokenType::Divide, value: "/".to_string() });
+                    self.position += 1;
+                } 
                 '"' => {
-                    let start = self.position + 1;
+                    let start: usize = self.position + 1;
                     if let Some(end) = self.source[start..].find('"') {
-                        let end = end + start;
-                        let value = self.source[start..end].to_string();
+                        let end: usize = end + start;
+                        let value: String = self.source[start..end].to_string();
                         tokens.push(Token { token_type: TokenType::String, value });
                         self.position = end + 1;
                     }
                 }
                 _ if current_char.is_alphabetic() => {
-                    let start = self.position;
+                    let start: usize = self.position;
                     while self.position < self.source.len() && self.source.chars().nth(self.position).unwrap().is_alphanumeric() {
                         self.position += 1;
                     }
-                    let value = self.source[start..self.position].to_string();
+                    let value: String = self.source[start..self.position].to_string();
                     tokens.push(Token { token_type: TokenType::Identifier, value });
                 }
                 _ => self.position += 1,

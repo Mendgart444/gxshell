@@ -28,6 +28,7 @@ impl Compiler {
             let error1: String = Red.paint("Error: could not compiler rust file").to_string();
 
             // 🚀 Rust-Code kompilieren
+            println!("{}", Blue.paint("[INFO] compiling Rust code..."));
             let output = Command::new("rustc")
                 .args([&rust_file, "-o", output_filename])
                 .output()
@@ -117,8 +118,7 @@ impl Compiler {
             ASTNode::Bool(value) => format!("{}", value),
             ASTNode::StringLiteral(value) => format!("\"{}\"", value),
             ASTNode::Identifier(name) => name.clone(),
-            #[allow(unreachable_patterns)]
-            _ => String::new(),
+            
         }
     }
 }

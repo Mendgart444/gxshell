@@ -33,6 +33,7 @@ impl Parser {
 
 
     fn parse_statement(&mut self) -> Option<ASTNode> {
+        // function
         if self.match_token(TokenType::Gxfn) {
             if let Some(fn_name) = self.parse_identifier() {
                 let mut params = Vec::new();
@@ -52,6 +53,7 @@ impl Parser {
                 let body = self.parse_block();
                 return Some(ASTNode::Function(fn_name, params, Box::new(body)));
             }
+        // Println
         } else if self.match_token(TokenType::Println) {
             let mut args = Vec::new();
             while let Some(arg) = self.parse_expression() {
@@ -61,6 +63,7 @@ impl Parser {
                 }
             }
             return Some(ASTNode::Println(args));
+        // Variable
         } else if self.match_token(TokenType::Var) {
             if let Some(var_name) = self.parse_identifier() {
                 if self.match_token(TokenType::Equal) {
@@ -69,6 +72,23 @@ impl Parser {
                     }
                 }
             }
+        // If
+        } else if self.match_token(TokenType::If) {
+            if let Some(condition) = self.parse_expression() {
+                let then_branch: ASTNode = self.parse_block();
+                let else_branch: Option<Box<ASTNode>> = if self.match_token(TokenType::Else) {
+                    Some(Box::new(self.parse_block()))
+                } else {
+                    None
+                };
+                return Some(ASTNode::If(Box::new(condition), Box::new(then_branch), else_branch));
+            }
+        // Return
+        } else if self.match_token(TokenType::Return) {
+            if let Some(value) = self.parse_expression() {
+                return Some(ASTNode::Return(Box::new(value)));
+            }
+        // Identifier
         } else if self.match_token(TokenType::Identifier) {
             let func_name = self.tokens[self.pos - 1].value.clone();
             if self.match_token(TokenType::OpenParen) {
@@ -95,6 +115,9 @@ impl Parser {
             Some(ASTNode::StringLiteral(self.tokens[self.pos - 1].value.clone()))
         } else if self.match_token(TokenType::Identifier) {
             Some(ASTNode::Identifier(self.tokens[self.pos - 1].value.clone()))
+        } else if self.match_token(TokenType::Bool) {
+            let value: bool = self.tokens[self.pos - 1].value == "true";
+            Some(ASTNode::Bool(value))
         } else {
             None
         }

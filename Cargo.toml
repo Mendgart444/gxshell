@@ -2,7 +2,7 @@
 name = "gxshell"
 authors = ["Raffael <Mendgart444>"]
 description = "A shell for Devs. inspired by the windows cmd, msys and git bash"
-version = "0.1.3"
+version = "0.1.4"
 repository = "https://github.com/Mendgart444/gxshell"
 documentation = "https://github.com/Mendgart444/gxshell/blob/main/README.md"
 edition = "2021"
