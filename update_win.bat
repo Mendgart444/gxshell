@@ -1,2 +1,2 @@
 set CARGO_TARGET_DIR=E:\gxshell_release\win
-cargo run --release
+cargo build --release
