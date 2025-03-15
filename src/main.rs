@@ -1,6 +1,5 @@
 mod gxcore;
 mod env_var;
-mod updater;
 mod compiler;
 mod dev;
 
@@ -58,6 +57,7 @@ fn execute_command(command: &str) {
         "dev" => dev::dev_mode(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),
+        "version_log" => println!("{}", Green.paint("Updated GX Conpiler\nadded version_log command\noptimized app")),
         "version" => println!("{}", Green.paint(env_var::GXSHELL_VERSION)),
         "gxcore" => run_gxcore(parts),
         "gx" => run_compiler(parts),
