@@ -372,6 +372,7 @@ version = "0.1.5"
 dependencies = [
  "dirs",
  "nu-ansi-term",
+ "rayon",
  "reqwest",
  "rustyline",
  "self_update",

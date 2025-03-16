@@ -1,5 +1,4 @@
 use crate::compiler::lexer::{Token, TokenType};
-use rayon::prelude::*;
 
 #[derive(Debug)]
 pub enum ASTNode {
@@ -26,12 +25,7 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Option<ASTNode> {
-        let statements: Vec<ASTNode> = (0..self.tokens.len())
-            .into_par_iter()
-            .filter_map(|_| self.parse_statement())
-            .collect();
-        
-        Some(ASTNode::Block(statements.into_boxed_slice()))
+        self.parse_statement()
     }
 
     fn parse_statement(&mut self) -> Option<ASTNode> {
@@ -45,9 +39,27 @@ impl Parser {
                 TokenType::Var => {
                     self.pos += 1;
                     if let Some(var_name) = self.parse_identifier() {
+                        let mut var_type:String = String::new();
+                        let is_reference:bool = if self.match_token(TokenType::Ampersand) {
+                            true
+                        } else {
+                            false
+                        };
+                        
+                        if self.match_token(TokenType::Indicator) {
+                            if let Some(type_name) = self.parse_identifier() {
+                                if is_reference {
+                                    let ref_type: String = format!("&{}", type_name);
+                                    var_type.push_str(&ref_type);
+                                } else {
+                                    var_type.push_str(&type_name);
+                                }
+                            }
+                        }
+
                         if self.match_token(TokenType::Equal) {
                             if let Some(value) = self.parse_expression() {
-                                return Some(ASTNode::Var(var_name, String::new(), Box::new(value)));
+                                return Some(ASTNode::Var(var_name, var_type, Box::new(value)));
                             }
                         }
                     }

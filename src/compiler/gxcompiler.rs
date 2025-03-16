@@ -11,7 +11,7 @@ impl Compiler {
     pub fn compile_to_rust(source_code: &str, output_filename: &str) {
         println!("{}", Blue.paint("[INFO] Starting process..."));
         println!("{}", Blue.paint("[INFO] Starting lexer..."));
-        let mut lexer = Lexer::new(source_code.to_string());
+        let mut lexer = Lexer::new(source_code);
         let tokens = lexer.tokenize();
         
         println!("{}", Blue.paint("[INFO] Starting Parser..."));
@@ -54,7 +54,7 @@ impl Compiler {
     fn generate_rust_code(ast: &ASTNode) -> String {
         match ast {
             ASTNode::Block(body) => {
-                let mut code = String::new();
+                let mut code: String = String::new();
                 for node in body {
                     code.push_str(&Compiler::generate_rust_code(node));
                 }
@@ -124,6 +124,7 @@ impl Compiler {
             ASTNode::Return(expression) => format!("    return {};\n", Compiler::generate_rust_code(expression)),
             ASTNode::StringLiteral(value) => format!("\"{}\"", value),
             ASTNode::Identifier(name) => name.clone(),
+            _ => String::new(),
             
         }
     }

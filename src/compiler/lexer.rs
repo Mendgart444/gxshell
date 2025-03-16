@@ -61,6 +61,7 @@ impl<'a> Lexer<'a> {
                 '+' => self.add_token(&mut tokens, TokenType::Plus),
                 '-' => self.add_token(&mut tokens, TokenType::Minus),
                 '*' => self.add_token(&mut tokens, TokenType::Multiply),
+                ',' => self.add_token(&mut tokens, TokenType::Comma),
                 '/' => self.add_token(&mut tokens, TokenType::Divide),
                 '"' => {
                     self.chars.next();
