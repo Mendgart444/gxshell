@@ -1,5 +1,6 @@
 use std::process::{Command, Stdio};
 use std::env;
+#[cfg(not(target_os("windows")))]
 use std::fs;
 use std::path::PathBuf;
 use sysinfo::System;

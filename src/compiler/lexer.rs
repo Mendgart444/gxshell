@@ -1,9 +1,12 @@
+use std::collections::HashSet;
+
 #[derive(Debug, PartialEq)]
 pub enum TokenType {
     Gxfn, Var, Println, String, Bool, Colon, 
     DoubleLessThan, Identifier, If, Else, Return, 
     Equal, OpenParen, CloseParen, Comma, End, 
     Indicator, Plus, Minus, Multiply, Divide,
+    Number, Ampersand,
 }
 
 #[derive(Debug)]
@@ -12,111 +15,76 @@ pub struct Token {
     pub value: String,
 }
 
-pub struct Lexer {
-    source: String,
-    position: usize,
+pub struct Lexer<'a> {
+    source: &'a str,
+    chars: std::iter::Peekable<std::str::Chars<'a>>,
 }
 
-impl Lexer {
-    pub fn new(source: String) -> Self {
-        Lexer { source, position: 0 }
+impl<'a> Lexer<'a> {
+    pub fn new(source: &'a str) -> Self {
+        Lexer {
+            source,
+            chars: source.chars().peekable(),
+        }
     }
 
     pub fn tokenize(&mut self) -> Vec<Token> {
-        let mut tokens: Vec<Token> = Vec::new();
+        let mut tokens = Vec::with_capacity(self.source.len() / 2);
+        let keywords: HashSet<&str> = ["gxfn", "if", "var", "println", "return", "else", "true", "false"].iter().cloned().collect();
 
-        while self.position < self.source.len() {
-            let current_char: char = self.source.chars().nth(self.position).unwrap();
-
-            match current_char {
-                'g' if self.source[self.position..].starts_with("gxfn") => {
-                    tokens.push(Token { token_type: TokenType::Gxfn, value: "gxfn".to_string() });
-                    self.position += 4;
+        while let Some(&c) = self.chars.peek() {
+            match c {
+                'a'..='z' | 'A'..='Z' => {
+                    let ident = self.consume_while(|ch| ch.is_alphanumeric());
+                    let token_type = match keywords.get(ident.as_str()) {
+                        Some(&"gxfn") => TokenType::Gxfn,
+                        Some(&"if") => TokenType::If,
+                        Some(&"var") => TokenType::Var,
+                        Some(&"println") => TokenType::Println,
+                        Some(&"return") => TokenType::Return,
+                        Some(&"else") => TokenType::Else,
+                        Some(&"true") | Some(&"false") => TokenType::Bool,
+                        _ => TokenType::Identifier,
+                    };
+                    tokens.push(Token { token_type, value: ident });
                 }
-                'i' if self.source[self.position..].starts_with("if") => {
-                    tokens.push(Token { token_type: TokenType::If, value: "if".to_string() });
-                    self.position += 2;
+                '0'..='9' => {
+                    let num = self.consume_while(|ch| ch.is_numeric());
+                    tokens.push(Token { token_type: TokenType::Number, value: num });
                 }
-                'v' if self.source[self.position..].starts_with("var") => {
-                    tokens.push(Token { token_type: TokenType::Var, value: "var".to_string() });
-                    self.position += 3;
-                }
-                'p' if self.source[self.position..].starts_with("println") => {
-                    tokens.push(Token { token_type: TokenType::Println, value: "println".to_string() });
-                    self.position += 7;
-                }
-                't' if self.source[self.position..].starts_with("true") => {
-                    tokens.push(Token { token_type: TokenType::Bool, value: "true".to_string() });
-                    self.position += 4;
-                }
-                'r' if self.source[self.position..].starts_with("return") => {
-                    tokens.push(Token { token_type: TokenType::Return, value: "return".to_string() });
-                    self.position += 6;
-                }
-                'f' if self.source[self.position..].starts_with("false") => {
-                    tokens.push(Token { token_type: TokenType::Bool, value: "false".to_string() });
-                    self.position += 5;
-                }
-                'e' if self.source[self.position..].starts_with("else") => {
-                    tokens.push(Token { token_type: TokenType::Else, value: "else".to_string() });
-                    self.position += 4;
-                }
-                '=' => {
-                    tokens.push(Token { token_type: TokenType::Equal, value: "=".to_string() });
-                    self.position += 1;
-                }
-                '(' => {
-                    tokens.push(Token { token_type: TokenType::OpenParen, value: "(".to_string() });
-                    self.position += 1;
-                }
-                ')' => {
-                    tokens.push(Token { token_type: TokenType::CloseParen, value: ")".to_string() });
-                    self.position += 1;
-                }
-                ';' => {
-                    tokens.push(Token { token_type: TokenType::End, value: ";".to_string() });
-                    self.position += 1;
-                }
-                ':' => {
-                    tokens.push(Token { token_type: TokenType::Indicator, value: ":".to_string() });
-                    self.position += 1;
-                }
-                '+' => {
-                    tokens.push(Token { token_type: TokenType::Plus, value: "+".to_string() });
-                    self.position += 1;
-                }
-                '-' => {
-                    tokens.push(Token { token_type: TokenType::Minus, value: "-".to_string() });
-                    self.position += 1;
-                }
-                '*' => {
-                    tokens.push(Token { token_type: TokenType::Multiply, value: "*".to_string() });
-                    self.position += 1;
-                }
-                '/' => {
-                    tokens.push(Token { token_type: TokenType::Divide, value: "/".to_string() });
-                    self.position += 1;
-                } 
+                '=' => self.add_token(&mut tokens, TokenType::Equal),
+                '(' => self.add_token(&mut tokens, TokenType::OpenParen),
+                ')' => self.add_token(&mut tokens, TokenType::CloseParen),
+                ';' => self.add_token(&mut tokens, TokenType::End),
+                ':' => self.add_token(&mut tokens, TokenType::Indicator),
+                '&' => self.add_token(&mut tokens, TokenType::Ampersand),
+                '+' => self.add_token(&mut tokens, TokenType::Plus),
+                '-' => self.add_token(&mut tokens, TokenType::Minus),
+                '*' => self.add_token(&mut tokens, TokenType::Multiply),
+                '/' => self.add_token(&mut tokens, TokenType::Divide),
                 '"' => {
-                    let start: usize = self.position + 1;
-                    if let Some(end) = self.source[start..].find('"') {
-                        let end: usize = end + start;
-                        let value: String = self.source[start..end].to_string();
-                        tokens.push(Token { token_type: TokenType::String, value });
-                        self.position = end + 1;
-                    }
+                    self.chars.next();
+                    let string_val = self.consume_while(|ch| ch != '"');
+                    self.chars.next();
+                    tokens.push(Token { token_type: TokenType::String, value: string_val });
                 }
-                _ if current_char.is_alphabetic() => {
-                    let start: usize = self.position;
-                    while self.position < self.source.len() && self.source.chars().nth(self.position).unwrap().is_alphanumeric() {
-                        self.position += 1;
-                    }
-                    let value: String = self.source[start..self.position].to_string();
-                    tokens.push(Token { token_type: TokenType::Identifier, value });
-                }
-                _ => self.position += 1,
+                _ => { self.chars.next(); }
             }
         }
         tokens
+    }
+
+    fn consume_while<F>(&mut self, condition: F) -> String
+    where F: Fn(char) -> bool {
+        let mut result = String::new();
+        while let Some(&ch) = self.chars.peek() {
+            if !condition(ch) { break; }
+            result.push(self.chars.next().unwrap());
+        }
+        result
+    }
+
+    fn add_token(&mut self, tokens: &mut Vec<Token>, token_type: TokenType) {
+        tokens.push(Token { token_type, value: self.chars.next().unwrap().to_string() });
     }
 }
