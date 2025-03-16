@@ -1,6 +1,7 @@
 use crate::compiler::lexer::Lexer;
 use crate::compiler::parser::{ASTNode, Parser};
 use std::fs;
+use std::io::Write;
 use std::process::Command;
 use nu_ansi_term::Color::{Red, Blue};
 
@@ -121,4 +122,44 @@ impl Compiler {
             
         }
     }
+
+    pub fn crate_new_project(args: &str) {
+        if args.trim().is_empty() {
+            eprintln!("Error: Please provide a project name");
+            return;
+        }  
+        let project_name = args.to_string();
+
+        if let Err(e) = fs::create_dir(&project_name) {
+            eprint!("{}", Red.paint(format!("Error: Failed to create project directory: {}", e)));
+            return;
+        }
+
+        let main_file_path = format!("{}/src/main.gx", project_name);
+        match fs::File::create(&main_file_path) {
+            Ok(mut file) => {
+                if let Err(e) = writeln!(file, "gxfn main() {{\n    println << \"Hello, World!\";\n}}") {
+                    eprint!("{}", Red.paint(format!("Error: Failed to write main.gx file: {}", e)));
+                }
+            }
+            Err(e) => {
+                eprint!("{}", Red.paint(format!("Error: Failed to create main.gx file: {}", e)));
+            }
+        }
+        // adding settings.gxconfig file
+        let settings_file_path = format!("{}/settings.gxconfig", project_name);
+        match fs::File::create(&settings_file_path) {
+            Ok(mut file) => {
+                if let Err(e) = writeln!(file, "name = {}\nversion = \"0.0.1\"\n\ndependencies \n{{ \n\n }}", project_name) {
+                    eprint!("{}", Red.paint(format!("Error: Failed to write settings.gxconfig file: {}", e)));
+                }
+            }
+            Err(e) => {
+                eprint!("{}", Red.paint(format!("Error: Failed to create settings.gxconfig file: {}", e)));
+            }
+        }
+
+    }
 }
+
+

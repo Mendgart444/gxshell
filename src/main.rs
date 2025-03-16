@@ -124,6 +124,8 @@ fn run_compiler(args: Vec<&str>) {
     if args.len() < 3 {
         println!("{}", Blue.paint("Usage: gx <filename> <outputname>"));
         return;
+    } else if args[1] == "--new" {
+        Compiler::crate_new_project(&args[2]);
     }
 
     match std::fs::read_to_string(args[1]) {
