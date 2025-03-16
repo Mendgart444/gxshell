@@ -57,7 +57,14 @@ fn execute_command(command: &str) {
         "dev" => dev::dev_mode(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),
-        "version_log" => println!("{}", Green.paint("Updated GX Conpiler\nadded version_log command\noptimized app")),
+        "version_log" => println!("{}", Green.paint(
+            "GXShell version 0.1.5\n
+            Version Log:\n
+            Cybergx: updated Parser and Compiler\n 
+            Changes: -\n
+            fixed issuses: -\n
+            added features: -\n"
+        )),
         "version" => println!("{}", Green.paint(env_var::GXSHELL_VERSION)),
         "gxcore" => run_gxcore(parts),
         "gx" => run_compiler(parts),

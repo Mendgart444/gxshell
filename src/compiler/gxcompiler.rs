@@ -53,12 +53,11 @@ impl Compiler {
 
     fn generate_rust_code(ast: &ASTNode) -> String {
         match ast {
-            ASTNode::Main(body) => {
-                let mut code = String::from("fn main() {\n");
+            ASTNode::Block(body) => {
+                let mut code = String::new();
                 for node in body {
                     code.push_str(&Compiler::generate_rust_code(node));
                 }
-                code.push_str("}\n");
                 code
             }
             ASTNode::Println(args) => {
@@ -69,15 +68,21 @@ impl Compiler {
                     .join(", ");
                 format!("    println!(\"{{}}\", {});\n", formatted_string)
             }
-            ASTNode::Var(name, value) => {
-                format!("    let {} = {};\n", name, Compiler::generate_rust_code(value))
+            ASTNode::Var(name, var_type, value) => {
+                format!("    let {}:{} = {};\n", name, var_type, Compiler::generate_rust_code(value))
             }
-            ASTNode::Function(name, params, body) => {
+            ASTNode::Function(name, return_type, params, body) => {
                 let params_str = params
                     .iter()
                     .map(|(name, typ)| format!("{}: {}", name, typ))
                     .collect::<Vec<String>>()
                     .join(", ");
+                
+                let typ = if return_type == "void" { 
+                    " ".to_string() 
+                } else { 
+                    format!(" -> {}", return_type) 
+                };
             
                 // Wenn `main`, dann kein `-> bool`
                 if name == "main" {
@@ -89,9 +94,10 @@ impl Compiler {
                     )
                 } else {
                     format!(
-                        "fn {}({}) -> bool {{\n{}\n}}\n",
+                        "fn {}({}) {} {{\n{}\n}}\n",
                         name,
                         params_str,
+                        typ,
                         Compiler::generate_rust_code(body)
                     )
                 }
@@ -116,7 +122,6 @@ impl Compiler {
                 code
             }
             ASTNode::Return(expression) => format!("    return {};\n", Compiler::generate_rust_code(expression)),
-            ASTNode::Bool(value) => format!("{}", value),
             ASTNode::StringLiteral(value) => format!("\"{}\"", value),
             ASTNode::Identifier(name) => name.clone(),
             

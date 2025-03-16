@@ -2,16 +2,15 @@ use crate::compiler::lexer::{Token, TokenType};
 
 #[derive(Debug)]
 pub enum ASTNode {
-    Main(Vec<ASTNode>),
     Println(Vec<ASTNode>), // println kann mehrere Argumente haben
-    Var(String, Box<ASTNode>),
-    Function(String, Vec<(String, String)>, Box<ASTNode>),
+    Var(String, String, Box<ASTNode>),
+    Function(String, String, Vec<(String, String)>, Box<ASTNode>),
     FunctionCall(String, Vec<ASTNode>), 
     If(Box<ASTNode>, Box<ASTNode>, Option<Box<ASTNode>>),
-    Bool(bool),
     Return(Box<ASTNode>),
     StringLiteral(String),
     Identifier(String),
+    Block(Vec<ASTNode>),
 }
 
 pub struct Parser {
@@ -33,7 +32,15 @@ impl Parser {
         // function
         if self.match_token(TokenType::Gxfn) {
             if let Some(fn_name) = self.parse_identifier() {
-                let mut params = Vec::new();
+                let mut params: Vec<(String, String)> = Vec::new();
+                let mut return_type: String = String::new();
+                if self.match_token(TokenType::Indicator) {
+                    if let Some(return_type_name) = self.parse_identifier() {
+                        return_type.push_str(&return_type_name);
+                    } else {
+                        return None;
+                    }
+                }
                 if self.match_token(TokenType::OpenParen) {
                     while let Some(param_name) = self.parse_identifier() {
                         if self.match_token(TokenType::Colon) {
@@ -47,12 +54,12 @@ impl Parser {
                     }
                     self.match_token(TokenType::CloseParen);
                 }
-                let body = self.parse_block();
-                return Some(ASTNode::Function(fn_name, params, Box::new(body)));
+                let body: ASTNode = self.parse_block();
+                return Some(ASTNode::Function(fn_name, return_type, params, Box::new(body)));
             }
         // Println
         } else if self.match_token(TokenType::Println) {
-            let mut args = Vec::new();
+            let mut args: Vec<ASTNode> = Vec::new();
             while let Some(arg) = self.parse_expression() {
                 args.push(arg);
                 if !self.match_token(TokenType::DoubleLessThan) {
@@ -62,10 +69,22 @@ impl Parser {
             return Some(ASTNode::Println(args));
         // Variable
         } else if self.match_token(TokenType::Var) {
+            let mut var_type:String = String::new();
+            let is_reference: bool = true;
             if let Some(var_name) = self.parse_identifier() {
+                if self.match_token(TokenType::Indicator) {
+                    if let Some(type_name) = self.parse_identifier() {
+                        if is_reference {
+                            let format = format!("&{}", type_name);
+                            var_type.push_str(&format);
+                        } else {
+                            var_type.push_str(&type_name);
+                        }
+                    }
+                }
                 if self.match_token(TokenType::Equal) {
                     if let Some(value) = self.parse_expression() {
-                        return Some(ASTNode::Var(var_name, Box::new(value)));
+                        return Some(ASTNode::Var(var_name, var_type, Box::new(value)));
                     }
                 }
             }
@@ -87,9 +106,9 @@ impl Parser {
             }
         // Identifier
         } else if self.match_token(TokenType::Identifier) {
-            let func_name = self.tokens[self.pos - 1].value.clone();
+            let func_name: String = self.tokens[self.pos - 1].value.clone();
             if self.match_token(TokenType::OpenParen) {
-                let mut args = Vec::new();
+                let mut args: Vec<ASTNode> = Vec::new();
                 while let Some(arg) = self.parse_expression() {
                     args.push(arg);
                     if !self.match_token(TokenType::Comma) {
@@ -112,9 +131,6 @@ impl Parser {
             Some(ASTNode::StringLiteral(self.tokens[self.pos - 1].value.clone()))
         } else if self.match_token(TokenType::Identifier) {
             Some(ASTNode::Identifier(self.tokens[self.pos - 1].value.clone()))
-        } else if self.match_token(TokenType::Bool) {
-            let value: bool = self.tokens[self.pos - 1].value == "true";
-            Some(ASTNode::Bool(value))
         } else {
             None
         }
@@ -130,13 +146,13 @@ impl Parser {
     }
 
     fn parse_block(&mut self) -> ASTNode {
-        let mut statements = Vec::new();
+        let mut statements: Vec<ASTNode> = Vec::new();
         while !self.match_token(TokenType::End) {
             if let Some(statement) = self.parse_statement() {
                 statements.push(statement);
             }
         }
-        ASTNode::Main(statements)
+        ASTNode::Block(statements)
     }
     
     
