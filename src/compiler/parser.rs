@@ -6,12 +6,9 @@ pub enum ASTNode {
     Println(Vec<ASTNode>), // println kann mehrere Argumente haben
     Var(String, Box<ASTNode>),
     Function(String, Vec<(String, String)>, Box<ASTNode>),
-    FunctionCall(String, Vec<ASTNode>),
-    #[allow(dead_code)] 
+    FunctionCall(String, Vec<ASTNode>), 
     If(Box<ASTNode>, Box<ASTNode>, Option<Box<ASTNode>>),
-    #[allow(dead_code)]
     Bool(bool),
-    #[allow(dead_code)]
     Return(Box<ASTNode>),
     StringLiteral(String),
     Identifier(String),
