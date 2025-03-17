@@ -6,7 +6,7 @@ pub enum TokenType {
     DoubleLessThan, Identifier, If, Else, Return, 
     Equal, OpenParen, CloseParen, Comma, End, 
     Indicator, Plus, Minus, Multiply, Divide,
-    Number, Ampersand,
+    Number, Ampersand, Commend,
 }
 
 #[derive(Debug)]
@@ -59,6 +59,7 @@ impl<'a> Lexer<'a> {
                 ':' => self.add_token(&mut tokens, TokenType::Indicator),
                 '&' => self.add_token(&mut tokens, TokenType::Ampersand),
                 '+' => self.add_token(&mut tokens, TokenType::Plus),
+                '#' => self.add_token(&mut tokens, TokenType::Commend),
                 '-' => self.add_token(&mut tokens, TokenType::Minus),
                 '*' => self.add_token(&mut tokens, TokenType::Multiply),
                 ',' => self.add_token(&mut tokens, TokenType::Comma),

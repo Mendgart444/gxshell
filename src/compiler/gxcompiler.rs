@@ -123,6 +123,7 @@ impl Compiler {
             }
             ASTNode::Return(expression) => format!("    return {};\n", Compiler::generate_rust_code(expression)),
             ASTNode::StringLiteral(value) => format!("\"{}\"", value),
+            ASTNode::Commend => format!("{}", " "),
             ASTNode::Identifier(name) => name.clone(),
             _ => String::new(),
             
