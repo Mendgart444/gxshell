@@ -23,7 +23,7 @@ impl Compiler {
 
             let rust_file = format!("{}.rs", output_filename);
             if let Err(e) = fs::write(&rust_file, &rust_code) {
-                eprintln!("{}", Red.paint(format!("Error: Faild to Write Rust File: {}", e)));
+                eprintln!("{}", Red.paint(format!("Error: Failed to Write Rust File: {}", e)));
                 return;
             }
             let error1: String = Red.paint("Error: could not compiler rust file").to_string();
@@ -44,7 +44,7 @@ impl Compiler {
 
             // Temporäre Rust-Datei entfernen
             if let Err(e) = fs::remove_file(&rust_file) {
-                eprintln!("{}", Red.paint(format!("Error: faild to delete temp file: {}", e)));
+                eprintln!("{}", Red.paint(format!("Error: failed to delete temp file: {}", e)));
             }
         } else {
             eprintln!("{}", Red.paint("Error: Could not Parsing the code."));
@@ -125,6 +125,21 @@ impl Compiler {
             ASTNode::StringLiteral(value) => format!("\"{}\"", value),
             ASTNode::Commend => format!("{}", " "),
             ASTNode::Identifier(name) => name.clone(),
+            ASTNode::Import(path) => {
+                let module_path = path.replace("::", "/");
+                let rust_file = format!("std/{}.rs", module_path);
+                let rust_mod_file = format!("std/{}/mod.rs", module_path);
+
+                if fs::metadata(&rust_file).is_ok() {
+                    format!("use {};", path)
+                } else if fs::metadata(&rust_mod_file).is_ok() {
+                    format!("use {};", path)
+                } else {
+                    eprintln!("Warning: Module '{}' not found in std/", path);
+                    String::new()
+                }
+            }
+
             _ => String::new(),
             
         }

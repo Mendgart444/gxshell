@@ -5,15 +5,26 @@ mod dev;
 
 use compiler::gxcompiler::Compiler;
 use std::process::{Command, Stdio};
-use std::env;
-use std::path::PathBuf;
+use std::{env, io};
+use std::fs::File;
+use std::io::BufRead;
+use std::path::{Path, PathBuf};
 use rustyline::Editor;
 use nu_ansi_term::Color::{Red, LightRed, Yellow, Blue, Green};
+use rustyline::completion::FilenameCompleter;
+use rustyline::Config;
+
+
+
 
 fn main()  {
+    let config = Config::builder()
+        .history_ignore_space(true)
+        .build();
     let editor_err:String = format!("{}", Red.paint("Failed to launch editor."));
-    let mut rl: Editor<(), rustyline::history::FileHistory> = Editor::<(), _>::new().expect(&editor_err);
+    let mut rl: Editor<FilenameCompleter, rustyline::history::FileHistory> = Editor::with_config(config).expect(&editor_err);
     let history_path: PathBuf = get_history_path();
+
     
     if rl.load_history(&history_path).is_err() {
         println!("{}", Red.paint("No .history data found"));
@@ -45,8 +56,37 @@ fn main()  {
     
 }
 
+fn check_std_library() {
+    let std_path: &Path = Path::new("std");
+    let std_modules: Vec<&str> = vec![
+        "std/io/stdin.rs",
+        "std/io/stdout.rs",
+        "std/gxmodules/gxmath.rs",
+    ];
+
+    let mut missing_modules: Vec<String> = Vec::new();
+
+    for module in &std_modules {
+        if !Path::new(module).exists() {
+            missing_modules.push(module.to_string())
+        }
+    }
+
+    if !std_path.exists() {
+        println!("{}", Red.paint("Warning: The standard library (std/) is missing!"));
+        println!("{}", Yellow.paint("Some CyberGX features may not work correctly."));
+    } else if !missing_modules.is_empty() {
+        println!("{}", Red.paint("Warning: Some standard library modules are missing!"));
+        for module in missing_modules {
+            println!("{}", Yellow.paint(format!("Missing: {}", module)));
+        }
+    }
+}
+
+
 fn execute_command(command: &str) {
     let parts: Vec<&str> = command.split_whitespace().collect();
+
 
     if parts.is_empty() {
         return;
@@ -63,12 +103,12 @@ fn execute_command(command: &str) {
             Cybergx: updated Parser and Compiler\n 
             Changes: -\n
             fixed issuses: -\n
-            added features: -\n"
+            added features: Shell scripting\n"
         )),
         "version" => println!("{}", Green.paint(env_var::GXSHELL_VERSION)),
         "gxcore" => run_gxcore(parts),
         "gx" => run_compiler(parts),
-        _ => run_external_command(parts),
+        _ => run_external_command(parts)
     }
 }
 
@@ -83,15 +123,23 @@ fn get_history_path() -> PathBuf {
     .join(".history")
 }
 
+
+
 fn change_directory(args: Vec<&str>) {
     if args.len() < 2 {
         println!("{}", Blue.paint("Usage: cd <path>"));
         return;
     }
-    let new_path = PathBuf::from(args[1]);
+
+    let new_path = if args[1] == "~" {
+        dirs::home_dir().unwrap_or(PathBuf::from("."))
+    } else {
+        PathBuf::from(args[1])
+    };
+
     if new_path.exists() && new_path.is_dir() {
         if let Err(e) = env::set_current_dir(&new_path) {
-            println!("{}", Red.paint(format!("Failed to change dir {}", e)));
+            println!("{}", Red.paint(format!("Failed to change dir: {}", e)));
         }
     } else {
         println!("{}", Red.paint(format!("Directory not found: {}", new_path.display())));
@@ -121,6 +169,7 @@ fn clear_screen() {
 fn run_gxcore(args: Vec<&str>) {
     if args.len() < 2 {
         println!("{}", Red.paint("Error: start gxcore with --start"));
+        return;
     } else if args[1] == "--start" {
         println!("{}", Yellow.paint("WARNING: IF YOU MAKE A MISTAKE IN GXCORE THEN YOUR COMPUTER MAY BE UNUSABLE!!!"));
         gxcore::start();
@@ -132,6 +181,11 @@ fn run_compiler(args: Vec<&str>) {
         println!("{}", Blue.paint("Usage: gx <filename> <outputname>"));
         return;
     } else if args[1] == "--new" {
+        if Path::new(&args[2]).exists() {
+            println!("{}", Yellow.paint(format!("Warning: Project '{}' already exists!", args[2])));
+            return;
+        }
+
         Compiler::crate_new_project(&args[2]);
     }
 
@@ -139,8 +193,8 @@ fn run_compiler(args: Vec<&str>) {
         Ok(source_code) => {
             Compiler::compile_to_rust(&source_code, args[2]);
         }
-        Err(_) => {
-            println!("{}", Red.paint("Error: faild to read data."));
+        Err(e) => {
+            println!("{}", Red.paint(format!("Error: Failed to read data {}:, {}", args[1], e)));
         }
     }
 }

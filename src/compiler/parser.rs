@@ -15,6 +15,13 @@ pub enum ASTNode {
     Block(Vec<ASTNode>),
     #[allow(dead_code)]
     Commend,
+    Import(ImportNode),
+}
+
+#[derive(Debug)]
+pub struct ImportNode {
+    pub module_path: String,
+    pub is_standard_lib: bool,
 }
 
 pub struct Parser {
@@ -57,9 +64,36 @@ impl Parser {
                             }
                             self.match_token(TokenType::CloseParen);
                         }
-                        let body = self.parse_block();
+                        let body:ASTNode = self.parse_block();
                         return Some(ASTNode::Function(fn_name, return_type, params, Box::new(body)));
                     }
+                }
+                TokenType::Import => {
+                    self.pos += 1;
+                    let mut path = String::new();
+                    let mut is_std = false;
+
+                    if self.match_token(TokenType::Identifier) {
+                        path.push_str(&self.tokens[self.pos - 1].value);
+
+                        if path == "std" {
+                            is_std = true;
+                        }
+
+                        if self.match_token(TokenType::Colon) && self.match_token(TokenType::Colon) {
+                            if self.match_token(TokenType::Identifier) {
+                                path.push_str("::");
+                                path.push_str(&self.tokens[self.pos - 1].value);
+                                return Some(ASTNode::Import(ImportNode {
+                                    module_path: path,
+                                    is_standard_lib: is_std,
+                                }));
+                            }
+                        }
+                    }
+
+                    eprintln!("Error: Invalid import syntax");
+                    return None;
                 }
                 TokenType::Println => {
                     self.pos += 1;

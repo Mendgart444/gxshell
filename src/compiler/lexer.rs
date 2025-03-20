@@ -6,7 +6,7 @@ pub enum TokenType {
     DoubleLessThan, Identifier, If, Else, Return, 
     Equal, OpenParen, CloseParen, Comma, End, 
     Indicator, Plus, Minus, Multiply, Divide,
-    Number, Ampersand, Commend,
+    Number, Ampersand, Commend, Import, SDT,
 }
 
 #[derive(Debug)]
@@ -30,7 +30,7 @@ impl<'a> Lexer<'a> {
 
     pub fn tokenize(&mut self) -> Vec<Token> {
         let mut tokens = Vec::with_capacity(self.source.len() / 2);
-        let keywords: HashSet<&str> = ["gxfn", "if", "var", "println", "return", "else", "true", "false"].iter().cloned().collect();
+        let keywords: HashSet<&str> = ["gxfn", "if", "var", "println", "return", "else", "true", "false", "Import"].iter().cloned().collect();
 
         while let Some(&c) = self.chars.peek() {
             match c {
@@ -43,6 +43,7 @@ impl<'a> Lexer<'a> {
                         Some(&"println") => TokenType::Println,
                         Some(&"return") => TokenType::Return,
                         Some(&"else") => TokenType::Else,
+                        Some(&"import") => TokenType::Import,
                         Some(&"true") | Some(&"false") => TokenType::Bool,
                         _ => TokenType::Identifier,
                     };
