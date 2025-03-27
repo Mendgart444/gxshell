@@ -50,9 +50,9 @@ jobs:
         run: |
           mkdir -p GXShell_Stable/${{ env.TARGET_DIR }}
           if [[ "$RUNNER_OS" == "Windows" ]]; then
-            cp target/release/your_project_name.exe GXShell_Stable/${{ env.TARGET_DIR }}/
+            cp target/release/gxshell.exe GXShell_Stable/${{ env.TARGET_DIR }}/
           else
-            cp target/release/your_project_name GXShell_Stable/${{ env.TARGET_DIR }}/
+            cp target/release/gxshell GXShell_Stable/${{ env.TARGET_DIR }}/
           fi
         shell: bash
 
