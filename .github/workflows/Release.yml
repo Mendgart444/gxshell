@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: mendgart444/GXShell_Stable  # Dein Release-Repo
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_TOKEN }}
           path: GXShell_Stable
 
       - name: Copy build artifacts to release repo
