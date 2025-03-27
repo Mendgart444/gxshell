@@ -59,8 +59,8 @@ jobs:
       - name: Commit and push build artifacts to release repo
         run: |
           cd GXShell_Stable
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
+          git config --global user.name "Mendgart444"
+          git config --global user.email "raffael.hauschildt@gmx.ch"
           git add ${{ env.TARGET_DIR }}/
           git commit -m "Add ${{ env.TARGET_DIR }} build artifact"
           git push origin main
