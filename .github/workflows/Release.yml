@@ -62,5 +62,5 @@ jobs:
           git config --global user.name "Mendgart444"
           git config --global user.email "raffael.hauschildt@gmx.ch"
           git add ${{ env.TARGET_DIR }}/
-          git commit -m "Add ${{ env.TARGET_DIR }} build artifact"
+          git commit -m "Add ${{ env.TARGET_DIR }} build artifact GXShell v1.0.0"
           git push origin main

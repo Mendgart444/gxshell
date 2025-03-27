@@ -1,0 +1,27 @@
+Custom License for Structural Reference
+
+Copyright (c) 2025 GXShell
+
+1. Use of Structure Allowed  
+   - Third parties may use the **structure** of this code as a reference for their own implementations.  
+   - The structure includes architecture, file organization, and general design patterns.  
+
+2. Restrictions  
+   - The direct code may not be copied or redistributed, neither in whole nor in part.  
+   - Modifications of this code may not be published or distributed.  
+
+3. Commercial Use  
+   - The use of the structure is allowed, but direct commercial use of this code is prohibited.  
+   - If a commercial implementation is based on this structure, written permission must be obtained.  
+
+4. Attribution  
+   - If the structure is used as a basis, proper attribution is required.  
+
+5. No Warranty  
+   - This code is provided without warranties or liabilities. Use at your own risk.  
+
+6. Shell-Specific Terms  
+   - This license applies to the structure and design of the shell, but not to its direct code.  
+   - The shell's command syntax, scripting capabilities, and interaction model may be referenced, but not copied or directly implemented.  
+   - Any modifications or adaptations of the shell must not be publicly redistributed without explicit permission.
+
