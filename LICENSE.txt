@@ -3,7 +3,7 @@ Custom License for Structural Reference
 Copyright (c) 2025 GXShell
 
 1. Use of Structure Allowed  
-   - Third parties may use the **structure** of this code as a reference for their own implementations.  
+   - Third parties may use the structure of this code as a reference for their own implementations.  
    - The structure includes architecture, file organization, and general design patterns.  
 
 2. Restrictions  
