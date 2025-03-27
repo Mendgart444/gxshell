@@ -1,48 +1,93 @@
 mod gxcore;
 mod env_var;
-mod compiler;
-mod dev;
+mod linux;
+mod windows;
 
-use compiler::gxcompiler::Compiler;
 use std::process::{Command, Stdio};
-use std::{env, io};
-use std::fs::File;
-use std::io::BufRead;
-use std::path::{Path, PathBuf};
-use rustyline::Editor;
+use std::env;
+use std::path::PathBuf;
 use nu_ansi_term::Color::{Red, LightRed, Yellow, Blue, Green};
 use rustyline::completion::FilenameCompleter;
-use rustyline::Config;
+use rustyline::highlight::MatchingBracketHighlighter;
+use rustyline::hint::HistoryHinter;
+use rustyline::validate::MatchingBracketValidator;
+use rustyline::Helper;
+use rustyline::validate::Validator;
+use rustyline::highlight::Highlighter;
+use rustyline::completion::Completer;
+use rustyline::hint::Hinter;
+use rustyline::{Config, EditMode, Editor};
+ 
 
+pub struct GXShellHelper {
+    pub completer: FilenameCompleter,
+    pub highlighter: MatchingBracketHighlighter,
+    pub hinter: HistoryHinter,
+    pub validator: MatchingBracketValidator,
+}
 
+// Implementiere die benötigten Traits
+impl Completer for GXShellHelper {
+    type Candidate = String;
 
+    fn complete(
+        &self,
+        line: &str,
+        pos: usize,
+        ctx: &rustyline::Context<'_>,
+    ) -> rustyline::Result<(usize, Vec<String>)> {
+        let completions: (usize, Vec<rustyline::completion::Pair>) = self.completer.complete(line, pos, ctx)?;
+        let string_completions: Vec<String> = completions.1.into_iter().map(|p| p.display).collect();
+        Ok((completions.0, string_completions))
+    }
+}
+
+impl Hinter for GXShellHelper {
+    type Hint = String;
+    fn hint(&self, line: &str, pos: usize, _ctx: &rustyline::Context<'_>) -> Option<String> {
+        self.hinter.hint(line, pos, _ctx)
+    }
+}
+
+impl Highlighter for GXShellHelper {}
+
+impl Validator for GXShellHelper {}
+
+impl Helper for GXShellHelper {}
 
 fn main()  {
-    let config = Config::builder()
-        .history_ignore_space(true)
-        .build();
-    let editor_err:String = format!("{}", Red.paint("Failed to launch editor."));
-    let mut rl: Editor<FilenameCompleter, rustyline::history::FileHistory> = Editor::with_config(config).expect(&editor_err);
+    let config: Config = Config::builder().edit_mode(EditMode::Emacs).build();
+
+    let helper: GXShellHelper = GXShellHelper {
+        completer: FilenameCompleter::new(),
+        highlighter: MatchingBracketHighlighter::new(),
+        hinter: HistoryHinter {},
+        validator: MatchingBracketValidator::new(),
+    };
+
+    let mut rl: Editor<GXShellHelper, rustyline::history::FileHistory> = Editor::with_config(config)
+        .expect("Failed to create editor");
+
+    rl.set_helper(Some(helper));
+
+    // History laden
     let history_path: PathBuf = get_history_path();
-
-    
     if rl.load_history(&history_path).is_err() {
-        println!("{}", Red.paint("No .history data found"));
+        println!("No history found.");
     }
-
     
     println!("{}", LightRed.paint(format!("GXShell version {}", env_var::GXSHELL_VERSION)));
     loop {
         let current_dir: PathBuf = env::current_dir().unwrap_or(PathBuf::from("C:\\"));
-        let prompt = format!("{}> ", current_dir.display().to_string().trim());
+        let prompt: String = format!("{}> ", current_dir.display().to_string().trim());
         match rl.readline(&prompt) {
             Ok(line) => {
                 let command = line.trim();
                 if command == "exit" {
                     break;
                 }
+                rl.save_history(&history_path).expect("Error could not save history");
 
-                let _ = rl.add_history_entry(command);
                 execute_command(command);
             }
 
@@ -50,39 +95,8 @@ fn main()  {
         }
     }
 
-    if let Err(e) = rl.save_history(&history_path) {
-        eprintln!("{}", Red.paint(format!("Error: Could not save history data: {}", e)));
-    }
     
 }
-
-fn check_std_library() {
-    let std_path: &Path = Path::new("std");
-    let std_modules: Vec<&str> = vec![
-        "std/io/stdin.rs",
-        "std/io/stdout.rs",
-        "std/gxmodules/gxmath.rs",
-    ];
-
-    let mut missing_modules: Vec<String> = Vec::new();
-
-    for module in &std_modules {
-        if !Path::new(module).exists() {
-            missing_modules.push(module.to_string())
-        }
-    }
-
-    if !std_path.exists() {
-        println!("{}", Red.paint("Warning: The standard library (std/) is missing!"));
-        println!("{}", Yellow.paint("Some CyberGX features may not work correctly."));
-    } else if !missing_modules.is_empty() {
-        println!("{}", Red.paint("Warning: Some standard library modules are missing!"));
-        for module in missing_modules {
-            println!("{}", Yellow.paint(format!("Missing: {}", module)));
-        }
-    }
-}
-
 
 fn execute_command(command: &str) {
     let parts: Vec<&str> = command.split_whitespace().collect();
@@ -94,20 +108,15 @@ fn execute_command(command: &str) {
 
     match parts[0] {
         "cd" => change_directory(parts),
-        "dev" => dev::dev_mode(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),
-        "version_log" => println!("{}", Green.paint(
-            "GXShell version 0.1.5\n
-            Version Log:\n
-            Cybergx: updated Parser and Compiler\n 
-            Changes: -\n
-            fixed issuses: -\n
-            added features: Shell scripting\n"
-        )),
+        "info" => println!("
+        version: {}\n
+        about:   GXShell is a shell for Dev's and GX\n
+        author:  Raffael\n
+        ", env_var::GXSHELL_VERSION),
         "version" => println!("{}", Green.paint(env_var::GXSHELL_VERSION)),
         "gxcore" => run_gxcore(parts),
-        "gx" => run_compiler(parts),
         _ => run_external_command(parts)
     }
 }
@@ -131,7 +140,7 @@ fn change_directory(args: Vec<&str>) {
         return;
     }
 
-    let new_path = if args[1] == "~" {
+    let new_path: PathBuf = if args[1] == "~" {
         dirs::home_dir().unwrap_or(PathBuf::from("."))
     } else {
         PathBuf::from(args[1])
@@ -147,7 +156,7 @@ fn change_directory(args: Vec<&str>) {
 }
 
 fn list_directory() {
-    let current_dir = env::current_dir().unwrap();
+    let current_dir: PathBuf = env::current_dir().unwrap();
     for entry in current_dir.read_dir().unwrap() {
         if let Ok(entry) = entry {
             println!("{}", entry.file_name().to_string_lossy());
@@ -156,14 +165,8 @@ fn list_directory() {
 }
 
 fn clear_screen() {
-    #[cfg(windows)]
-    {
-        let _ = Command::new("cmd").arg("/c").arg("cls").status();
-    }
-    #[cfg(not(windows))]
-    {
-        let _ = Command::new("clear").status();
-    }
+    print!("\x1B[2J\x1B[1;1H");
+    println!("");
 }
 
 fn run_gxcore(args: Vec<&str>) {
@@ -173,29 +176,6 @@ fn run_gxcore(args: Vec<&str>) {
     } else if args[1] == "--start" {
         println!("{}", Yellow.paint("WARNING: IF YOU MAKE A MISTAKE IN GXCORE THEN YOUR COMPUTER MAY BE UNUSABLE!!!"));
         gxcore::start();
-    }
-}
-
-fn run_compiler(args: Vec<&str>) {
-    if args.len() < 3 {
-        println!("{}", Blue.paint("Usage: gx <filename> <outputname>"));
-        return;
-    } else if args[1] == "--new" {
-        if Path::new(&args[2]).exists() {
-            println!("{}", Yellow.paint(format!("Warning: Project '{}' already exists!", args[2])));
-            return;
-        }
-
-        Compiler::crate_new_project(&args[2]);
-    }
-
-    match std::fs::read_to_string(args[1]) {
-        Ok(source_code) => {
-            Compiler::compile_to_rust(&source_code, args[2]);
-        }
-        Err(e) => {
-            println!("{}", Red.paint(format!("Error: Failed to read data {}:, {}", args[1], e)));
-        }
     }
 }
 

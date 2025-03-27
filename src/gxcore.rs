@@ -1,11 +1,12 @@
+use crate::linux;
+use crate::windows;
 use std::process::{Command, Stdio};
 use std::env;
-#[allow(unused_imports)]
+#[cfg(not(windows))]
 use std::fs;
 use std::path::PathBuf;
-use sysinfo::System;
 use rustyline::Editor;
-use nu_ansi_term::Color::{Red, Green, LightRed, Blue};
+use nu_ansi_term::Color::{Red, LightRed, Blue};
 
 
 
@@ -13,7 +14,8 @@ pub fn start() {
 
 
     let mut rl = Editor::<(), _>::new().expect("Faild to launch editor.");
-    let _ = rl.load_history(".hystory");
+    let history_path: PathBuf = get_history_path();
+    let _ = rl.load_history(&history_path);
     
     
     
@@ -36,7 +38,7 @@ pub fn start() {
         }
     }
   
-    let _ = rl.save_history(".hystory");
+    let _ = rl.save_history(&history_path);
 
 
 
@@ -57,13 +59,56 @@ fn execute_command(command:&str){
                 println!("{}", Red.paint("Error, you need admin rights for this"));
             }
         },
-        "sysinfo" => system_info(),
+        "add-user" => {
+            if is_admin() {
+                if cfg!(target_os = "windows") {
+                    windows::add_user_windows(parts[1], parts[2]);
+                } else {
+                    linux::add_user_linux(parts[1]);
+                }
+            } else {
+                println!("{}", Red.paint("Error: you need admin rights for this"));
+            }
+        },
+        "sysinfo" => linux::system_info(),
+        "set-ip-adress" => {
+            if is_admin() {
+                if cfg!(target_os = "windows") {
+                    windows::set_ip_address_windows(parts[1], parts[2], parts[3]);
+                } else {
+                    linux::set_ip_address_linux(parts[1], parts[2]);
+                }
+            } else {
+                println!("{}", Red.paint("Error: you need admin rights for this"));
+            }
+        },
+        "kill-process" => {
+            if cfg!(target_os = "windows") {
+                windows::kill_process_windows(parts[1].parse::<u32>().expect("Invaild Number"));
+            } else {
+                linux::kill_process_linux(parts[1].parse::<u32>().expect("Invaild Number"));
+            }
+        },
         "cd" => change_directory(parts),
         "dir" => list_directory(),
         "cls" => clear_screen(),
          _ => run_external_command(parts),
     }
 }
+
+fn get_history_path() -> PathBuf {
+    if cfg!(target_os = "windows") {
+        env::var("USERPROFILE")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| PathBuf::from("."))
+    } else {
+        #[cfg(target_os = "linux")]
+        use std::fs;
+        dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")) 
+    }
+        .join(".history")
+}
+
 #[cfg(target_os = "windows")]
 fn is_admin() -> bool {
     use winapi::um::processthreadsapi::OpenProcessToken;
@@ -132,15 +177,8 @@ fn list_directory() {
 }
 
 fn clear_screen() {
-    #[cfg(windows)]
-    {
-        let _ = Command::new("cmd").arg("/c").arg("cls").status();
-    }
-
-    #[cfg(not(windows))]
-    {
-        let _ = Command::new("clear").status();
-    }
+    print!("\x1B[2J\x1B[1;1H");
+    println!("");
 }
 
 fn bios(args: Vec<&str>) {
@@ -149,7 +187,7 @@ fn bios(args: Vec<&str>) {
         return;
     }
     #[cfg(not(windows))]
-    if args[1] == "--read_var"{
+    if args[1] == "--read-var"{
         let path = "/sys/firmware/efefivars/BootOrder-8be4df61-93ca-11d2-aa0d-00e098032b8c";
 
         match fs::read(path) {
@@ -161,22 +199,48 @@ fn bios(args: Vec<&str>) {
             }
         
         }
+    } else if args[1] == "--set-var" {
+        linux::set_uefi_variable(args[2] as &str, args[3].as_bytes());
+    } else if args[1] == "--change-boot-order" {
+        linux::change_boot_order_linux(args[2] as &str);
+    } else if args[1] == "--show-temp-and-fans" {
+        linux::read_temperatures_linux();
+    } else if args[1] == "--gpu-fan-speed" {
+        set_nvidia_fan_speed(args[2].parse::<u32>().expect("Invaild Number"));
+    } else if args[1] == "--create-partition" {
+        linux::create_partition_linux(args[2], args[3], args[4]);
+    } else if args[1] == "--read-bios-info" {
+        linux::read_bios_info_linux();
     }
 
     #[cfg(windows)]
     if args[1] == "--read_var"{
         println!("under construct");
+    } else if args[1] == "--set-var" {
+        windows::set_uefi_variable(args[2] as &str, args[3].as_bytes());
+    } else if args[1] == "--change-boot-order" {
+        windows::change_boot_order_win(args[2] as &str);
+    } else if args[1] == "--read-bios-info" {
+        windows::read_bios_info_windows();
+    } else if args[1] == "--show--temp-and-fans" {
+        windows::read_temperatures_windows();
+    } else if args[1] == "--gpu-fan-speed" {
+        set_nvidia_fan_speed(args[2].parse::<u32>().expect("Invaild Number"));
+    } else if args[1] == "--create-partition" {
+        windows::create_partition_windows(args[2], args[3]);
     }
+
+
 }
 
+fn set_nvidia_fan_speed(speed: u32) {
+    let output = Command::new("nvidia-settings")
+        .args(["-a", &format!("GPUFanControlState=1")])
+        .args(["-a", &format!("GPUTargetFanSpeed={}", speed)])
+        .output()
+        .expect("Failed to execute nvidia-settings");
 
-
-fn system_info() {
-    let mut sys = System::new();
-    sys.refresh_all();
-
-    println!("{}", Green.paint(format!("CPU usage: {:.2}%", sys.global_cpu_info().cpu_usage())));
-    println!("{}", Green.paint(format!("RAM {}/{} MB", sys.used_memory() / 1024, sys.total_memory() / 1024)));
+    println!("{}", String::from_utf8_lossy(&output.stdout));
 }
 
 fn run_external_command(args: Vec<&str>) {
