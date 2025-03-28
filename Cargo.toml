@@ -8,7 +8,7 @@ documentation = "https://github.com/Mendgart444/gxshell/blob/main/README.md"
 edition = "2021"
 keywords = ["shell", "based-on-cmd", "dev-tools", "tools"]
 categories = ["command-line-utilities"]
-license = "MIT"
+license = "Custom"
 
 [dependencies]
 dirs = "5.0"
